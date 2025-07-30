@@ -1,0 +1,22 @@
+[tool.poetry]
+package-mode = false
+
+
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+fastapi = "^0.115.14"
+uvicorn = {extras = ["standart"], version = "^0.35.0"}
+pydantic = {extras = ["email"], version = "^2.11.7"}
+pydantic-settings = "^2.10.1"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.41"}
+asyncpg = "^0.30.0"
+grpcio = "^1.73.1"
+grpcio-tools = "^1.73.1"
+wsproto = "^1.2.0"
+hypercorn = "^0.17.3"
+pydantic-extra-types = "^2.10.5"
+phonenumbers = "^9.0.9"
+passlib = "^1.7.4"
+py-automapper = "^2.2.0"
+black = "^25.1.0"
