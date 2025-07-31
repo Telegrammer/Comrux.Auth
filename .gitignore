@@ -139,6 +139,7 @@ src/.env_app
 .env
 .envrc
 .venv
+.idea
 env/
 venv/
 ENV/

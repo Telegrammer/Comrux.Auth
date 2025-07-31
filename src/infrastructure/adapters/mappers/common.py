@@ -1,7 +1,7 @@
 from typing import Any, Type, get_type_hints
 
 from domain import Entity, ValueObject
-from .errors import MappingError
+from application.ports.mappers.errors import MappingError
 
 __all__ = ["to_domain"]
 
