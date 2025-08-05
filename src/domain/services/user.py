@@ -1,6 +1,6 @@
-from entities import User
-from value_objects import RawPassword, PasswordHash, Email, PhoneNumber
-from ports import PasswordHasher, UserIdGenerator
+from domain.entities import User
+from domain.value_objects import RawPassword, PasswordHash, Email, PhoneNumber
+from domain.ports import PasswordHasher, UserIdGenerator
 
 
 class UserService:

@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from value_objects import Id
+from domain.value_objects import Id
 
 
 __all__ = ["UserIdGenerator"]
