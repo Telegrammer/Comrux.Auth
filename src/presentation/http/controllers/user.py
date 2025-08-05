@@ -15,6 +15,12 @@ from passlib.context import CryptContext
 from presentation.adapters import UserCreate, UserRead
 from infrastructure.adapters import to_dto_mapper
 
+
+
+from domain.services import UserService
+from application import RegisterUserUsecase
+from infrastructure.adapters import BycryptPasswordHasher, UserUuid4Generator, SqlAlchemyUserCommandGateway
+
 __all__ = ["create_user", "get_user"]
 
 router = APIRouter(prefix="/users", tags=["user"])
@@ -22,24 +28,14 @@ router = APIRouter(prefix="/users", tags=["user"])
 
 @router.post("")
 async def create_user(
-    session: Annotated[AsyncSession, Depends(db_helper.session_getter)],
     request_body: UserCreate,
 ):
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    domain_user = DomainUser(
-        id_=Uuid4(value=str(uuid.uuid4())),
-        email=Email(value=request_body.email),
-        phone=PhoneNumber(value=request_body.phone),
-        password_hash=PasswordHash(
-            value=bytes(pwd_context.hash(request_body.password), encoding="utf-8"),
-        ),
+    use_case = RegisterUserUsecase(
+        UserService(BycryptPasswordHasher(), UserUuid4Generator()),
+        SqlAlchemyUserCommandGateway()
     )
-
-    new_user = to_dto_mapper.to(User).map(domain_user)
-
-    session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
+    use_case(**request_body.model_dump())
+    
 
 
 @router.get(
