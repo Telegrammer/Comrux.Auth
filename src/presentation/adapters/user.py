@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from pydantic import UUID4
 
-__all__ = ["UserCreate", "UserRead"]
+__all__ = ["UserCreate", "UserRead", "UserLogin"]
 
 
 class BaseUser(BaseModel):
@@ -10,8 +10,13 @@ class BaseUser(BaseModel):
 
 
 class UserCreate(BaseUser):
-    password: str
+    raw_password: str
 
 
 class UserRead(BaseUser):
     id_: UUID4
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    raw_password: str
