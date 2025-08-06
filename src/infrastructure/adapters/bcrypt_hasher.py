@@ -5,10 +5,10 @@ from passlib.context import CryptContext
 
 
 
-class BycryptPasswordHasher(PasswordHasher):
+class BcryptPasswordHasher(PasswordHasher):
 
     def __init__(self):
-        self.pwd_context: CryptContext = CryptContext(schemes=["bycript"])
+        self.pwd_context: CryptContext = CryptContext(schemes=["bcrypt"])
 
     def hash(self, raw_password: RawPassword) -> PasswordHash:
         return PasswordHash.create(bytes(self.pwd_context.hash(raw_password)))
