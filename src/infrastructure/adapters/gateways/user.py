@@ -15,12 +15,14 @@ __all__ = ["SqlAlchemyUserCommandGateway", "SqlAlchemyUserQueryGateway"]
 
 class SqlAlchemyUserCommandGateway:
 
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
     async def add(self, user: User):
-        session: AsyncSession = db_helper.session_getter()
         orm_user: ORMUser = to_dto_mapper.to(ORMUser).map(user)
-        session.add(orm_user)
-        await session.commit()
-        await session.refresh(orm_user)
+        self._session.add(orm_user)
+        await self._session.commit()
+        await self._session.refresh(orm_user)
 
     async def delete(self, user: User):
         ...
