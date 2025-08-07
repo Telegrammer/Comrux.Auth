@@ -1,0 +1,64 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+from dishka import Provider, provide, Scope, from_context
+from sqlalchemy.ext.asyncio import AsyncSession
+from setup.db_helper import DatabaseHelper
+from setup.config import Settings
+
+from domain import UserService
+from domain.ports import PasswordHasher, UserIdGenerator
+
+from application.ports import UserCommandGateway, UserQueryGateway
+from application import RegisterUserUsecase, LoginUsecase
+
+from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
+from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
+
+from infrastructure.adapters.gateways import (
+    SqlAlchemyUserCommandGateway,
+    SqlAlchemyUserQueryGateway,
+)
+
+
+__all__ = ["DatabaseProvider", "UsecaseProvider"]
+
+
+class DatabaseProvider(Provider):
+
+    scope = Scope.APP
+    settings = from_context(provides=Settings)
+
+    @provide
+    def provide_db(self, settings: Settings) -> DatabaseHelper:
+        return DatabaseHelper(
+            url=str(settings.db.url),
+            echo=settings.db.echo,
+            echo_pool=settings.db.echo_pool,
+            pool_size=settings.db.pool_size,
+            max_overflow=settings.db.max_overflow,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    async def provide_session(
+        self, db_helper: DatabaseHelper
+    ) -> AsyncGenerator[AsyncSession, None]:
+        async with db_helper.session_factory() as session:
+            yield session
+
+
+class UsecaseProvider(Provider):
+    scope = Scope.REQUEST
+
+    password_hasher = provide(source=BcryptPasswordHasher, provides=PasswordHasher)
+    user_id_generator = provide(source=UserUuid4Generator, provides=UserIdGenerator)
+    user_serivce = provide(UserService)
+
+    user_command_repo = provide(
+        source=SqlAlchemyUserCommandGateway, provides=UserCommandGateway
+    )
+    user_query_repo = provide(
+        source=SqlAlchemyUserQueryGateway, provides=UserQueryGateway
+    )
+
+    register_user = provide(RegisterUserUsecase)
+    login_user = provide(LoginUsecase)
