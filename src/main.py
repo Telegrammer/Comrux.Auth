@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dishka.integrations.fastapi import setup_dishka, FromDishka, inject
 
-from setup import Settings, DatabaseHelper, settings, DatabaseProvider, UsecaseProvider
+from setup import Settings, DatabaseHelper, settings, DatabaseProvider, ApplicationProvider, DomainProvider
 from domain import UserService
 
 from presentation.http.controllers.user import router as user_router
@@ -15,7 +15,7 @@ origins = ["http://localhost:8000", "http://127.0.0.1:3000", "http://localhost:3
 
 
 container: AsyncContainer = make_async_container(
-    DatabaseProvider(), UsecaseProvider(), context={Settings: settings}
+    DatabaseProvider(), DomainProvider(), ApplicationProvider(), context={Settings: settings}
 )
 
 

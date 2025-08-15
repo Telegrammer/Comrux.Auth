@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from dishka import Provider, provide, Scope, from_context
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +6,7 @@ from setup.config import Settings
 
 from domain import UserService
 from domain.ports import PasswordHasher, UserIdGenerator
+
 
 from application.ports import UserCommandGateway, UserQueryGateway
 from application import RegisterUserUsecase, LoginUsecase
@@ -46,17 +46,21 @@ class DatabaseProvider(Provider):
             yield session
 
 
-class UsecaseProvider(Provider):
+class DomainProvider(Provider):
     scope = Scope.REQUEST
 
     password_hasher = provide(source=BcryptPasswordHasher, provides=PasswordHasher)
     user_id_generator = provide(source=UserUuid4Generator, provides=UserIdGenerator)
-    user_serivce = provide(UserService)
+    user_service = provide(UserService)
 
-    user_command_repo = provide(
+
+class ApplicationProvider(Provider):
+    scope = Scope.REQUEST
+
+    user_command_gateway = provide(
         source=SqlAlchemyUserCommandGateway, provides=UserCommandGateway
     )
-    user_query_repo = provide(
+    user_query_gateway = provide(
         source=SqlAlchemyUserQueryGateway, provides=UserQueryGateway
     )
 

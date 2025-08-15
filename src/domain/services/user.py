@@ -10,7 +10,7 @@ class UserService:
         self._user_id_generator = id_generator
 
     def create_user(self, email: Email, phone: PhoneNumber, raw_password: RawPassword) -> User:
-
+        
         return User(
             id_= self._user_id_generator(),
             email=email,
@@ -19,7 +19,7 @@ class UserService:
         )
 
     def is_password_valid(self, user: User, raw_password: RawPassword) -> bool:
-        return self._password_hasher.verify(raw_password, user.password_hash)
+        return self._password_hasher.verify(raw_password.value, user.password_hash)
 
     def change_password(self, user: User, new_password: RawPassword) -> None:
         new_password_hash: PasswordHash = self._password_hasher.hash(new_password)

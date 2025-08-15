@@ -1,4 +1,4 @@
-from typing import Any, Type, get_type_hints
+from typing import Type, get_type_hints, TypeVar
 
 from domain import Entity, ValueObject
 from application.ports.mappers.errors import MappingError
@@ -24,6 +24,9 @@ def to_domain(source_object: object, target: Type[Entity]) -> Entity:
         if field_name not in source_attributes:
             raise MappingError("Source object does not have required attribute")
 
+        if isinstance(field_type, TypeVar):
+            field_type = field_type.__bound__
+            
         if issubclass(field_type, ValueObject):
             result_attributes[field_name] = field_type.create(source_dict[field_name])
 
