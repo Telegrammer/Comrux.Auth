@@ -10,7 +10,6 @@ __all__ = [
     "Email",
     "PhoneNumber",
     "Id",
-    "Password",
     "PasswordHash",
     "Email",
     "PhoneNumber",

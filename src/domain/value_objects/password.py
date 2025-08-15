@@ -5,10 +5,7 @@ from dataclasses import dataclass
 from .base import ValueObject
 
 
-__all__ = ["Password", "RawPassword", "PasswordHash"]
-
-
-class Password(ValueObject): ...
+__all__ = ["RawPassword", "PasswordHash"]
 
 
 PASSWORD_MIN_LENGTH = 8
@@ -29,11 +26,8 @@ def password_validator(password: str) -> str:
         raise ValueError("Password must have at least one special character")
     return password
 
-
-class Password[T](ValueObject): ...
-
-
-class RawPassword(Password[str]):
+@dataclass
+class RawPassword(ValueObject[str]):
 
     def __post_init__(self):
         super().__post_init__()
@@ -41,7 +35,7 @@ class RawPassword(Password[str]):
         digit_pattern: re.Pattern = re.compile(r".*[0-9]+.*")
         special_character_pattern = re.compile(r"[^\w]")
 
-        if not len(self.value) < PASSWORD_MIN_LENGTH:
+        if len(self.value) < PASSWORD_MIN_LENGTH:
             raise ValueError(
                 f"Password must be at least {PASSWORD_MIN_LENGTH} characters long"
             )

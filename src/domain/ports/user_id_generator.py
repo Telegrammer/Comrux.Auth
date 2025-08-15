@@ -8,5 +8,5 @@ __all__ = ["UserIdGenerator"]
 class UserIdGenerator(ABC):
 
     @abstractmethod
-    async def __call__(self, *args, **kwargs) -> Id:
+    def __call__(self, *args, **kwargs) -> Id:
         raise NotImplementedError

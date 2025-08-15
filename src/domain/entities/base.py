@@ -1,6 +1,6 @@
 from abc import ABCMeta
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar, Generic
 
 from ..value_objects import ValueObject, ValueObjectDescriptor, Id
 
@@ -14,6 +14,10 @@ class ValueObjectDescriptorMeta(type):
         annotations.update(dct.get("__annotations__", {}))
 
         for field_name, field_type in annotations.items():
+            
+            if isinstance(field_type, TypeVar) and field_type.__bound__:
+                field_type = field_type.__bound__
+            
             if isinstance(field_type, type) and issubclass(field_type, ValueObject):
                 dct[field_name] = ValueObjectDescriptor(field_name)
 
@@ -22,11 +26,11 @@ class ValueObjectDescriptorMeta(type):
 
 class EntityMeta(ABCMeta, ValueObjectDescriptorMeta):
     ...
-
+    
 @dataclass(eq=False)
-class Entity(metaclass=EntityMeta):
+class Entity[IdT: Id](metaclass=EntityMeta):
 
-    id_: Id
+    id_: IdT
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name == "id_" and getattr(self, "id_", None) is not None:
