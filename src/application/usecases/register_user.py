@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import time
+
 
 from domain.value_objects import Email, PhoneNumber, RawPassword
 from domain import User, UserService
