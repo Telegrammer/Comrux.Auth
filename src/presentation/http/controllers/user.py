@@ -2,8 +2,7 @@ from fastapi import APIRouter, HTTPException
 from dishka.integrations.fastapi import FromDishka, inject
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from domain import User
-
+from application.ports import UnitOfWork
 from application.usecases.register_user import RegisterUserRequest, RegisterUserUsecase
 from application.usecases.login_user import LoginUserRequest, LoginUserResponse, LoginUsecase
 
@@ -18,9 +17,11 @@ router = APIRouter(prefix="/user", tags=["user"])
 @inject
 async def register(
     request_body: UserCreate,
+    unit_of_work: FromDishka[UnitOfWork],
     interactor: FromDishka[RegisterUserUsecase]
-):
-    await interactor(RegisterUserRequest.from_primitives(**request_body.model_dump()))
+):  
+    async with unit_of_work:
+        await interactor(RegisterUserRequest.from_primitives(**request_body.model_dump()))
     
 
 

@@ -20,8 +20,6 @@ class SqlAlchemyUserCommandGateway:
     async def add(self, user: User):
         orm_user: ORMUser = to_dto_mapper.to(ORMUser).map(user)
         self._session.add(orm_user)
-        await self._session.commit()
-        await self._session.refresh(orm_user)
 
     async def delete(self, user: User): ...
 
@@ -38,7 +36,7 @@ class SqlAlchemyUserQueryGateway(UserQueryGateway):
         stmt = select(ORMUser).where(ORMUser.id_ == user_id)
         response = await self._session.execute(stmt)
         user = response.scalar_one_or_none()
-        return to_domain(user) if user else None
+        return to_domain(user, User) if user else None
 
     async def by_email(self, user_email: Email) -> User | None:
         stmt = select(ORMUser).where(ORMUser.email == user_email)

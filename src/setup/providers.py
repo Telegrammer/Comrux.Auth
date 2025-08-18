@@ -8,11 +8,12 @@ from domain import UserService
 from domain.ports import PasswordHasher, UserIdGenerator
 
 
-from application.ports import UserCommandGateway, UserQueryGateway
+from application.ports import UserCommandGateway, UserQueryGateway, UnitOfWork
 from application import RegisterUserUsecase, LoginUsecase
 
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
 from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
+from infrastructure.adapters.sqlalchemy_unit_of_work import SqlAlchemyUnitOfWork
 
 from infrastructure.adapters.gateways import (
     SqlAlchemyUserCommandGateway,
@@ -44,6 +45,13 @@ class DatabaseProvider(Provider):
     ) -> AsyncGenerator[AsyncSession, None]:
         async with db_helper.session_factory() as session:
             yield session
+    
+    @provide(scope=Scope.REQUEST)
+    async def provide_unit_of_work(
+        self, session: AsyncSession
+    ) -> AsyncGenerator[UnitOfWork, None]:
+        async with SqlAlchemyUnitOfWork(session) as unit_of_work:
+            yield unit_of_work
 
 
 class DomainProvider(Provider):
