@@ -1,9 +1,14 @@
 from typing import Type, get_type_hints, TypeVar
 
 from domain import Entity, ValueObject
-from application.ports.mappers.errors import MappingError
+from application.ports.mappers import MappingError
+from automapper import mapper
 
-__all__ = ["to_domain"]
+__all__ = ["to_dto", "to_domain"]
+
+
+def to_dto(source_entity: Entity, target: Type) -> object:
+    return mapper.to(target).map(source_entity)
 
 
 def to_domain(source_object: object, target: Type[Entity]) -> Entity:
@@ -26,7 +31,7 @@ def to_domain(source_object: object, target: Type[Entity]) -> Entity:
 
         if isinstance(field_type, TypeVar):
             field_type = field_type.__bound__
-            
+
         if issubclass(field_type, ValueObject):
             result_attributes[field_name] = field_type.create(source_dict[field_name])
 
