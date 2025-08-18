@@ -1,6 +1,9 @@
 from application.ports import UnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession
 
+__all__ = ["SqlAlchemyUnitOfWork"]
+
+
 class SqlAlchemyUnitOfWork(UnitOfWork):
     def __init__(self, session: AsyncSession):
         self._session = session
