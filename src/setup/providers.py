@@ -8,12 +8,13 @@ from domain import UserService
 from domain.ports import PasswordHasher, UserIdGenerator
 
 
-from application.ports import UserCommandGateway, UserQueryGateway, UnitOfWork
+from application.ports import UserCommandGateway, UserQueryGateway, UnitOfWork, UserMapper
 from application import RegisterUserUsecase, LoginUsecase
 
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
 from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
 from infrastructure.adapters.sqlalchemy_unit_of_work import SqlAlchemyUnitOfWork
+from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
 
 from infrastructure.adapters.gateways import (
     SqlAlchemyUserCommandGateway,
@@ -61,10 +62,11 @@ class DomainProvider(Provider):
     user_id_generator = provide(source=UserUuid4Generator, provides=UserIdGenerator)
     user_service = provide(UserService)
 
-
 class ApplicationProvider(Provider):
     scope = Scope.REQUEST
 
+    user_mapper = provide(source=SqlAlchemyUserMapper, provides=UserMapper)
+    
     user_command_gateway = provide(
         source=SqlAlchemyUserCommandGateway, provides=UserCommandGateway
     )
