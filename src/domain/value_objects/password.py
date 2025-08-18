@@ -31,9 +31,9 @@ class RawPassword(ValueObject[str]):
 
     def __post_init__(self):
         super().__post_init__()
-        letter_pattern: re.Pattern = re.compile(r".*[a-zA-z]+.")
+        letter_pattern: re.Pattern = re.compile(r".*[a-zA-z]+.*")
         digit_pattern: re.Pattern = re.compile(r".*[0-9]+.*")
-        special_character_pattern = re.compile(r"[^\w]")
+        special_character_pattern = re.compile(r".*[^\w].*")
 
         if len(self.value) < PASSWORD_MIN_LENGTH:
             raise ValueError(
