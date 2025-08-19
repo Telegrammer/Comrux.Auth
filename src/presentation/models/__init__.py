@@ -1,4 +1,2 @@
 from .user import *
-
-
-__all__ = ["UserRead", "UserCreate", "UserLogin"]
+from .auth import *
