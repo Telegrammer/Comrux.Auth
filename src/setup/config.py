@@ -1,21 +1,29 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, field_validator
 from pydantic import PostgresDsn, SecretStr
+from pathlib import Path
 
-
+BASE_DIR = Path(__file__).parent.parent.parent
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
 
 
 class JwtAuthConfig(BaseModel):
-    secret_key: SecretStr
+    secret_key: Path = BASE_DIR / "certificates" / "jwt-private.pem"
+    public_key: Path = BASE_DIR / "certificates" / "jwt-public.pem"
     algorithm: str
     access_token_expire_minutes: int
 
     @field_validator("algorithm")
     def validate_algorithm(cls, value: str) -> str:
-        allowed: list[str] = ["HS256", "H384", "HS512"]
+        allowed: list[str] = [
+            "HS256",
+            "H384",
+            "HS512",
+            "RS256",
+            "RS2048",
+        ]
 
         if value in allowed:
             return value
@@ -63,3 +71,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+print(settings.auth)
