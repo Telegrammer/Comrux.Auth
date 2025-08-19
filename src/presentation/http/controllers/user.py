@@ -4,9 +4,9 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 
 from application.ports import UnitOfWork
 from application.usecases.register_user import RegisterUserRequest, RegisterUserUsecase
-from application.usecases.login_user import LoginUserRequest, LoginUserResponse, LoginUsecase
 
-from presentation.models import UserCreate, UserRead, UserLogin
+from presentation.handlers import LoginHandler
+from presentation.models import UserCreate, UserLogin, JwtInfo
 
 __all__ = ["register", "login"]
 
@@ -22,21 +22,21 @@ async def register(
 ):  
     async with unit_of_work:
         await interactor(RegisterUserRequest.from_primitives(**request_body.model_dump()))
+
     
 
 
 @router.post(
     "/login",
-    response_model=UserRead
+    response_model=JwtInfo
 )
 @inject
 async def login(
     request_body: UserLogin,
-    interactor: FromDishka[LoginUsecase]
+    handler: FromDishka[LoginHandler]
 ):
-    response: LoginUserResponse | None = await interactor(LoginUserRequest.from_primitives(**request_body.model_dump()))
-    
-    if not response:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
+    response: JwtInfo | None = await handler(request_body)
 
-    return UserRead(**response)
+    if response:
+        return response
+    else: raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
