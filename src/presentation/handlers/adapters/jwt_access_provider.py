@@ -1,15 +1,15 @@
-__all__ = ["PyJwtAccessProvider"]
+__all__ = ["JwtAuthInfoPresenter"]
 
 from datetime import datetime, timedelta
 
 from application.usecases.login_user import LoginUserResponse
-from presentation.handlers.ports import AccessProvider
+from presentation.handlers.ports import AuthInfoPresenter
 from presentation.models import JwtInfo
 
 import jwt
 
 
-class PyJwtAccessProvider(AccessProvider):
+class JwtAuthInfoPresenter(AuthInfoPresenter):
 
     def __init__(
         self,
@@ -23,7 +23,7 @@ class PyJwtAccessProvider(AccessProvider):
         self._access_token_expire_minutes = access_token_expire_minutes
         self._now = now
 
-    def provide(self, usecase_response: LoginUserResponse) -> JwtInfo:
+    def present(self, usecase_response: LoginUserResponse) -> JwtInfo:
         payload: LoginUserResponse = usecase_response.copy()
         payload["sub"] = payload.pop("user_id")
         expire_datetime = self._now + timedelta(
