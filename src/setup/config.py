@@ -18,9 +18,6 @@ class JwtAuthConfig(BaseModel):
     @field_validator("algorithm")
     def validate_algorithm(cls, value: str) -> str:
         allowed: list[str] = [
-            "HS256",
-            "H384",
-            "HS512",
             "RS256",
             "RS2048",
         ]
