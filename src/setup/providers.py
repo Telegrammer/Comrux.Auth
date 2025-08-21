@@ -14,7 +14,7 @@ from setup.db_helper import DatabaseHelper
 from setup.config import Settings
 
 from domain import UserService
-from domain.ports import PasswordHasher, UserIdGenerator
+from domain.ports import PasswordHasher, UserIdGenerator, Clock
 
 
 from application.ports import (
@@ -28,6 +28,7 @@ from application import RegisterUserUsecase, LoginUsecase
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
 from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
 from infrastructure.adapters.sqlalchemy_unit_of_work import SqlAlchemyUnitOfWork
+from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
 
 from infrastructure.adapters.gateways import (
@@ -35,7 +36,7 @@ from infrastructure.adapters.gateways import (
     SqlAlchemyUserQueryGateway,
 )
 
-from presentation.handlers import PyJwtAccessProvider, AccessProvider, LoginHandler
+from presentation.handlers import JwtAuthInfoPresenter, AuthInfoPresenter, LoginHandler
 from presentation.models import JwtInfo, AuthInfo
 
 class SettingsProvider(Provider):
@@ -82,6 +83,7 @@ class DomainProvider(Provider):
     password_hasher = provide(source=BcryptPasswordHasher, provides=PasswordHasher)
     user_id_generator = provide(source=UserUuid4Generator, provides=UserIdGenerator)
     user_service = provide(UserService)
+    clock = provide(source=TimestampClock, provides=Clock, scope=Scope.APP)
 
 
 class ApplicationProvider(Provider):
@@ -106,13 +108,14 @@ class PresentationProvider(Provider):
     settings = from_context(Settings, scope=Scope.APP)
 
     auth_info = provide(source=JwtInfo, provides=AuthInfo)
+
     @provide
-    def obtain_access_provider_implementation(self, settings: Settings) -> AccessProvider:
-        return PyJwtAccessProvider(
+    def provide_auth_info_presentation(self, settings: Settings, clock: Clock) -> AuthInfoPresenter:
+        return JwtAuthInfoPresenter(
             secret_key=settings.auth.secret_key.read_text(),
             algorithm=settings.auth.algorithm,
             access_token_expire_minutes=settings.auth.access_token_expire_minutes,
-            now=datetime.now(timezone.utc),
+            now=clock.now(),
         )
 
     login_handler = provide(LoginHandler)
