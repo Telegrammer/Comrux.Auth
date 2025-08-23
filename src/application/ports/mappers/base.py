@@ -1,10 +1,9 @@
+__all__ = ["UserMapper"]
+
 from abc import ABC, abstractmethod
 
 
 from domain import Entity
-
-
-__all__ = ["UserMapper"]
 
 
 class DataMapper[Tdto](ABC):

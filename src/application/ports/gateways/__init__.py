@@ -1,4 +1,2 @@
 from .user import *
-
-
-__all__ = ["UserCommandGateway", "UserQueryGateway"]
+from .access_key import *
