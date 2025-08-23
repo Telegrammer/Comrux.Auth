@@ -1,5 +1,3 @@
-from .user import User
-from .base import Entity
-
-
-__all__ = ["User", "Entity"]
+from .user import *
+from .access_key import *
+from .base import *

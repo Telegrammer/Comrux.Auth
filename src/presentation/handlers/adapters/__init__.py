@@ -1,1 +1,1 @@
-from .jwt_access_provider import *
+from .jwt_auth_presenter import *

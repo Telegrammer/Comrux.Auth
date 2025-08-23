@@ -1,15 +1,21 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, field_validator
-from pydantic import PostgresDsn, SecretStr
+from pydantic import PostgresDsn
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent.parent
+
+
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
 
 
-class JwtAuthConfig(BaseModel):
+class AuthConfig(BaseModel):
+    access_key_expire_days: int = 7
+
+
+class JwtAuthConfig(AuthConfig):
     secret_key: Path = BASE_DIR / "certificates" / "jwt-private.pem"
     public_key: Path = BASE_DIR / "certificates" / "jwt-public.pem"
     algorithm: str
