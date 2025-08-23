@@ -1,6 +1,6 @@
 __all__ = ["TimestampClock"]
 
-from domain.ports import Clock
+from application.ports import Clock
 from datetime import datetime, timezone
 
 
