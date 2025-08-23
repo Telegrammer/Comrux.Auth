@@ -6,7 +6,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dishka.integrations.fastapi import setup_dishka, FromDishka, inject
 
-from setup import Settings, settings, DatabaseHelper, DatabaseProvider, ApplicationProvider, DomainProvider, PresentationProvider
+from setup import (
+    Settings,
+    settings,
+    DatabaseHelper,
+    DatabaseProvider,
+    ApplicationProvider,
+    DomainProvider,
+    PresentationProvider,
+)
 from domain import UserService
 
 from presentation.http.controllers.user import router as user_router
@@ -15,7 +23,11 @@ origins = ["http://localhost:8000", "http://127.0.0.1:3000", "http://localhost:3
 
 
 container: AsyncContainer = make_async_container(
-    DatabaseProvider(), DomainProvider(), ApplicationProvider(), PresentationProvider(), context={Settings: settings}
+    DatabaseProvider(),
+    DomainProvider(),
+    ApplicationProvider(),
+    PresentationProvider(),
+    context={Settings: settings},
 )
 
 
@@ -48,7 +60,7 @@ auth_app.add_middleware(
 async def root(service: FromDishka[UserService]):
     return {"service": service.__repr__()}
 
-    
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:auth_app", host=settings.run.host, port=settings.run.port, reload=True
