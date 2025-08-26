@@ -4,7 +4,8 @@ from .base import Entity
 from ..value_objects import Email, PhoneNumber, PasswordHash, Uuid4
 from dataclasses import dataclass
 
-type UserId = Uuid4
+
+class UserId(Uuid4): ...
 
 
 @dataclass

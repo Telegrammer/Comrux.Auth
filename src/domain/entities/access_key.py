@@ -5,17 +5,18 @@ from datetime import datetime
 from dataclasses import dataclass
 
 
-from ..value_objects import Uuid4, FutureDatetime, PassedDatetime
+from ..value_objects import Uuid4, PassedDatetime, FutureDatetime
 from .base import Entity
+from .user import UserId
 
 
-type AccessKeyId = Uuid4
+class AccessKeyId(Uuid4): ...
 
 
 @dataclass
 class AccessKey(Entity[AccessKeyId]):
 
-    user_id: Uuid4
+    user_id: UserId
     created_at: PassedDatetime
     expire_at: FutureDatetime
 
