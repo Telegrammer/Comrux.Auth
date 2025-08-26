@@ -20,4 +20,6 @@ class LoginHandler:
         response: LoginUserResponse = await self._login_usecase(
             PasswordLoginUserRequest.from_primitives(**request.model_dump())
         )
-        return self._auth_presenter.present(response)
+
+        auth_info: AuthInfo = AuthInfo(**response)
+        return self._auth_presenter.present(auth_info)
