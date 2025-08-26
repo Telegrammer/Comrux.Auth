@@ -1,4 +1,4 @@
-__all__ = ["AccessProvider"]
+__all__ = ["AuthInfoPresenter"]
 
 from abc import abstractmethod, ABC
 
@@ -7,8 +7,8 @@ from application.usecases.login_user import LoginUserResponse
 from presentation.models import AuthInfo
 
 
-class AccessProvider(ABC):
+class AuthInfoPresenter(ABC):
 
     @abstractmethod
-    def provide(usecase_response: LoginUserResponse) -> AuthInfo:
+    def present(usecase_response: LoginUserResponse) -> AuthInfo:
         raise NotImplementedError

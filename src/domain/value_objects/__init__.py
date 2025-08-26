@@ -3,6 +3,8 @@ from .id import *
 from .password import *
 from .phone import *
 from .email_object import *
+from .future_datetime import *
+from .passed_datetime import *
 
 __all__ = [
     "ValueObject",
@@ -15,4 +17,6 @@ __all__ = [
     "PhoneNumber",
     "RawPassword",
     "Uuid4",
+    "FutureDatetime",
+    "PassedDatetime"
 ]
