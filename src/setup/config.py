@@ -37,7 +37,7 @@ class JwtAuthConfig(AuthConfig):
 
     @field_validator("access_token_expire_minutes")
     def validate_access_expire(cls, value: int) -> int:
-        expire_min_time: int = 5
+        expire_min_time: int = 1
         expire_max_time: int = 24 * 60
         if expire_min_time <= value <= expire_max_time:
             return value
@@ -74,4 +74,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print(settings.auth)

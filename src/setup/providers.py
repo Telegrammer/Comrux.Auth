@@ -10,11 +10,13 @@ from typing import AsyncGenerator
 from datetime import timedelta
 from dishka import Provider, provide, Scope, from_context
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import MetaData
 from setup.db_helper import DatabaseHelper
 from setup.config import Settings
 
 from domain import UserService, AccessKeyService
 from domain.ports import PasswordHasher, UserIdGenerator, AccessKeyIdGenerator
+from domain.policies import AccessKeyValidityPolicy
 
 from application.ports import (
     UserCommandGateway,
@@ -25,10 +27,11 @@ from application.ports import (
 )
 from application import (
     RegisterUserUsecase,
-    LoginUsecase,
     PasswordLoginUsecase,
-    PasswordLoginUserRequest,
-    LoginUserRequest,
+    RefreshUsecase,
+    RefreshRequest,
+    StatelessRefreshUsecase,
+    StatelessRefreshRequest,
 )
 
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
@@ -43,7 +46,7 @@ from infrastructure.adapters.gateways import (
     SqlAlchemyUserQueryGateway,
 )
 
-from presentation.handlers import JwtAuthInfoPresenter, AuthInfoPresenter, LoginHandler
+from presentation.handlers import JwtAuthInfoPresenter, AuthInfoPresenter, LoginHandler, RefreshHandler
 from presentation.models import JwtInfo, AuthInfo
 
 
@@ -98,17 +101,24 @@ class DomainProvider(Provider):
         source=AccessKeyUuid4Generator, provides=AccessKeyIdGenerator
     )
 
-    @provide
-    def provide_access_key_service(self,
-        id_generator: AccessKeyIdGenerator, settings: Settings
-    ) -> AccessKeyService:
-        return AccessKeyService(
-            id_generator, timedelta(days=settings.auth.access_key_expire_days)
+    @provide(scope=Scope.APP)
+    def provide_access_key_validity_policy(self) -> AccessKeyValidityPolicy:
+        return AccessKeyValidityPolicy(
+            ttl=timedelta(days=7), min_freshness_precentage=0.05
         )
+
+    access_key_service = provide(AccessKeyService)
+    
 
 
 class ApplicationProvider(Provider):
     scope = Scope.REQUEST
+
+    settings = from_context(Settings, scope=Scope.APP)
+
+    @provide(scope=Scope.APP)
+    def provide_base_model_metadata(self, settings: Settings) -> MetaData:
+        return MetaData(naming_convention=settings.db.naming_convention)
 
     timestamp_clock = provide(source=TimestampClock, provides=Clock)
 
@@ -123,6 +133,7 @@ class ApplicationProvider(Provider):
 
     register_user = provide(RegisterUserUsecase)
     login_user = provide(PasswordLoginUsecase)
+    refresh = provide(source=StatelessRefreshUsecase, provides=RefreshUsecase)
 
 
 class PresentationProvider(Provider):
@@ -130,16 +141,38 @@ class PresentationProvider(Provider):
 
     settings = from_context(Settings, scope=Scope.APP)
 
-    auth_info = provide(source=JwtInfo, provides=AuthInfo)
-
-    @provide
-    def provide_auth_info_presentation(
-        self, settings: Settings
-    ) -> AuthInfoPresenter:
+    @provide(scope=Scope.APP)
+    def provide_auth_info_presentation(self, settings: Settings) -> AuthInfoPresenter:
         return JwtAuthInfoPresenter(
             secret_key=settings.auth.secret_key.read_text(),
+            public_key=settings.auth.public_key.read_text(),
             algorithm=settings.auth.algorithm,
-            access_token_expiration_time=timedelta(minutes=settings.auth.access_token_expire_minutes),
+            access_token_expiration_time=timedelta(
+                minutes=settings.auth.access_token_expire_minutes
+            ),
+        )
+    
+    @provide(scope=Scope.APP)
+    def provide_jwt_presentation(self, settings: Settings) -> JwtAuthInfoPresenter:
+        return JwtAuthInfoPresenter(
+            secret_key=settings.auth.secret_key.read_text(),
+            public_key=settings.auth.public_key.read_text(),
+            algorithm=settings.auth.algorithm,
+            access_token_expiration_time=timedelta(
+                minutes=settings.auth.access_token_expire_minutes
+            ),
+        )
+    
+    auth_info = provide(source=JwtInfo, provides=AuthInfo)
+    
+    login_handler = provide(LoginHandler)
+    
+    @provide
+    @staticmethod
+    def provide_refresh_handler(usecase: RefreshUsecase, presenter: AuthInfoPresenter) -> RefreshHandler:
+        return RefreshHandler(
+            StatelessRefreshRequest,
+            usecase,
+            presenter
         )
 
-    login_handler = provide(LoginHandler)
