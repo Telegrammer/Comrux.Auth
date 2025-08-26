@@ -6,10 +6,16 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from application.ports import UnitOfWork, UserQueryGateway
 from application.usecases.register_user import RegisterUserRequest, RegisterUserUsecase
 
-from presentation.handlers import LoginHandler
-from presentation.models import UserCreate, UserLogin, UserRead, JwtInfo, SessionInfo
+from presentation.handlers import LoginHandler, RefreshHandler, JwtAuthInfoPresenter
+from presentation.models import (
+    UserCreate,
+    UserLogin,
+    UserRead,
+    JwtInfo,
+    SessionInfo,
+    AuthInfo,
+)
 
-from automapper import mapper
 import jwt
 from setup import settings
 
@@ -42,6 +48,22 @@ async def login(request_body: UserLogin, handler: FromDishka[LoginHandler]):
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
 
 
+@router.get("/refresh", response_model=JwtInfo)
+@inject
+async def refresh_token(
+    jwt_presenter: FromDishka[JwtAuthInfoPresenter],
+    refresh_handler: FromDishka[RefreshHandler],
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
+):
+
+    auth_info: AuthInfo | None = jwt_presenter.to_auth_info(token.credentials, "refresh")
+    if not auth_info:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    new_jwt_info: JwtInfo = await refresh_handler(auth_info)
+    return new_jwt_info
+
+
 @router.get(
     "/me",
 )
@@ -49,11 +71,11 @@ async def login(request_body: UserLogin, handler: FromDishka[LoginHandler]):
 async def current_user(
     unit_of_work: FromDishka[UnitOfWork],
     gateway: FromDishka[UserQueryGateway],
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
 
     response = jwt.decode(
-        jwt=credentials.credentials,
+        jwt=token.credentials,
         key=settings.auth.public_key.read_text(),
         algorithms=settings.auth.algorithm,
     )
@@ -61,5 +83,5 @@ async def current_user(
     async with unit_of_work:
 
         user = await gateway.by_id(response["user_id"])
-        
+
         return UserRead(email=user.email, phone=user.phone, user_id=user.id_)
