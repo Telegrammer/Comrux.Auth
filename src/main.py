@@ -17,7 +17,7 @@ from setup import (
 )
 from domain import UserService
 
-from presentation.http.controllers.user import router as user_router
+from presentation.http.controllers.user import user_router
 
 origins = ["http://localhost:8000", "http://127.0.0.1:3000", "http://localhost:3000"]
 
