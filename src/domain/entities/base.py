@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, TypeVar
 
 from ..value_objects import ValueObject, ValueObjectDescriptor, Id
+from ..exceptions import DomainFieldError
 
 
 class ValueObjectDescriptorMeta(type):
@@ -36,7 +37,7 @@ class Entity[IdT: Id](metaclass=EntityMeta):
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name == "id_" and getattr(self, "id_", None) is not None:
-            raise "Changing entity ID is not permitted."  # TODO: make domain errors
+            raise DomainFieldError("Changing entity ID is not permitted.")
         super().__setattr__(name, value)
 
     def __eq__(self, other: Any) -> bool:
