@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from .base import ValueObject
+from ..exceptions import DomainFieldError
 
 __all__ = ["PhoneNumber"]
 
@@ -13,4 +14,4 @@ class PhoneNumber(ValueObject[str]):
             r"^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$"
         )
         if not pattern.search(self.value):
-            raise TypeError("value is not a phone number")
+            raise DomainFieldError("value is not a phone number")

@@ -2,6 +2,7 @@ __all__ = ["PassedDatetime"]
 
 
 from .base import ValueObject
+from ..exceptions import DomainFieldError
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -12,6 +13,6 @@ class PassedDatetime(ValueObject[datetime]):
     def __init__(self, value: datetime, now: datetime):
         self.value = value
         if now < value:
-            raise ValueError(
+            raise DomainFieldError(
                 "The datetime value must be earlier than the current datetime"
             )
