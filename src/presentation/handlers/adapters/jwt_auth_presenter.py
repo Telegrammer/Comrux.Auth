@@ -2,9 +2,12 @@ __all__ = ["JwtAuthInfoPresenter"]
 
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import jwt
+
+from application.exceptions import ExpiredAccessKeyError
+from presentation.exceptions import InvalidTokenTypeError
 
 from presentation.handlers.ports import AuthInfoPresenter
 from presentation.models import JwtInfo, AuthInfo
@@ -56,15 +59,15 @@ class JwtAuthInfoPresenter(AuthInfoPresenter):
             token_type="Bearer",
         )
 
-    def to_auth_info(self, credentials: bytes, required_type: str) -> AuthInfo | None:
+    def to_auth_info(self, credentials: bytes, required_type: str) -> AuthInfo:
         try:
             payload: dict[str, Any] = self._decode(credentials)
         except jwt.exceptions.ExpiredSignatureError:
-            return None
+            raise ExpiredAccessKeyError("Given Access key is expired")
     
         if payload.get("type", None) != required_type:
-            return None
-
+            raise InvalidTokenTypeError("Token is not refresh")
+ 
         return AuthInfo(
             key_id=payload["sub"],
             user_id=payload["user_id"],
