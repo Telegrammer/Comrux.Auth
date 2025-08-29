@@ -8,6 +8,7 @@ from domain.services import AccessKeyService, UserService
 from domain.value_objects import Email, RawPassword
 from .contract import LoginUserRequest, LoginUsecase, LoginUserResponse
 from application.ports import Clock, UserQueryGateway
+from application.exceptions.user import UserAuthenticationError
 
 
 @dataclass(slots=True, kw_only=True, frozen=True)
@@ -40,13 +41,10 @@ class PasswordLoginUsecase(LoginUsecase):
         self._access_key_service: AccessKeyService = access_key_service
 
     async def __call__(self, request: PasswordLoginUserRequest) -> LoginUserResponse:
-        known_user: User | None = await self._user_gateway.by_email(request.email.value)
-
-        if not known_user:
-            return None
+        known_user: User = await self._user_gateway.by_email(request.email.value)
 
         if not self._user_service.is_password_valid(known_user, request.raw_password):
-            return None
+            raise UserAuthenticationError("given password is not valid")
 
         new_access_key: AccessKey = self._access_key_service.create_access_key(
             user_id=getattr(known_user, "__object_id_"), now=self._clock.now()
