@@ -1,14 +1,25 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi_error_map import ErrorAwareRouter
+from fastapi_error_map import ErrorAwareRouter, rule
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from dishka.integrations.fastapi import FromDishka, inject
 from starlette import status
 
 from domain.exceptions import DomainFieldError
 from application.ports import UnitOfWork, UserQueryGateway
-from application.usecases.register_user import RegisterUserRequest, RegisterUserUsecase
+from application.exceptions import (
+    UserAlreadyExistsError,
+    UserNotFoundError,
+    UserAuthenticationError,
+    ExpiredAccessKeyError,
+)
+from application.ports.mappers.errors import MappingError
 
-from presentation.handlers import LoginHandler, RefreshHandler, JwtAuthInfoPresenter
+from presentation.handlers import (
+    LoginHandler,
+    RefreshHandler,
+    JwtAuthInfoPresenter,
+    RegisterHandler,
+)
 from presentation.models import (
     UserCreate,
     UserLogin,
@@ -16,6 +27,10 @@ from presentation.models import (
     JwtInfo,
     SessionInfo,
     AuthInfo,
+)
+
+from presentation.exceptions import (
+    InvalidTokenTypeError,
 )
 
 import jwt
@@ -27,59 +42,70 @@ http_bearer = HTTPBearer()
 
 
 def create_register_user_router() -> APIRouter:
-
     router = ErrorAwareRouter()
 
     @router.post(
         "/register",
-        error_map={DomainFieldError: status.HTTP_400_BAD_REQUEST},
+        error_map={
+            MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+            UserAlreadyExistsError: status.HTTP_409_CONFLICT,
+        },
         response_model=None,
     )
     @inject
     async def register(
         request_body: UserCreate,
-        unit_of_work: FromDishka[UnitOfWork],
-        interactor: FromDishka[RegisterUserUsecase],
+        interactor: FromDishka[RegisterHandler],
     ):
-        async with unit_of_work:
-            await interactor(
-                RegisterUserRequest.from_primitives(**request_body.model_dump())
-            )
+        await interactor(request_body)
 
     return router
 
 
-@user_router.post("/login", response_model=JwtInfo | SessionInfo)
-@inject
-async def login(request_body: UserLogin, handler: FromDishka[LoginHandler]):
-    response: JwtInfo | SessionInfo | None = await handler(request_body)
+def create_login_router() -> APIRouter:
+    router = ErrorAwareRouter()
 
-    if response:
-        return response
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
-
-
-@user_router.get("/refresh", response_model=JwtInfo)
-@inject
-async def refresh_token(
-    jwt_presenter: FromDishka[JwtAuthInfoPresenter],
-    refresh_handler: FromDishka[RefreshHandler],
-    token: HTTPAuthorizationCredentials = Depends(http_bearer),
-):
-
-    auth_info: AuthInfo | None = jwt_presenter.to_auth_info(
-        token.credentials, "refresh"
+    @router.post(
+        "/login",
+        error_map={
+            MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+            UserNotFoundError: status.HTTP_404_NOT_FOUND,
+            UserAuthenticationError: status.HTTP_401_UNAUTHORIZED,
+        },
+        response_model=JwtInfo | SessionInfo,
     )
-    if not auth_info:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+    @inject
+    async def login(request_body: UserLogin, handler: FromDishka[LoginHandler]):
+        return await handler(request_body)
 
-    new_jwt_info: JwtInfo = await refresh_handler(auth_info)
-    return new_jwt_info
+    return router
+
+
+def create_refresh_router() -> APIRouter:
+    router = ErrorAwareRouter()
+
+    @router.get(
+        "/refresh",
+        error_map={
+            InvalidTokenTypeError: status.HTTP_401_UNAUTHORIZED,
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+            ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
+        },
+        response_model=JwtInfo,
+    )
+    @inject
+    async def refresh_token(
+        jwt_presenter: FromDishka[JwtAuthInfoPresenter],
+        refresh_handler: FromDishka[RefreshHandler],
+        token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    ):
+
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
+        return await refresh_handler(auth_info)
+
+    return router
 
 
 @user_router.get(
@@ -106,3 +132,7 @@ async def current_user(
 
 
 user_router.include_router(create_register_user_router())
+
+user_router.include_router(create_login_router())
+
+user_router.include_router(create_refresh_router())
