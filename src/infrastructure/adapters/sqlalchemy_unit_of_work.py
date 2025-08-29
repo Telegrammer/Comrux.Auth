@@ -1,4 +1,5 @@
 from application.ports import UnitOfWork
+from application.exceptions import UserAlreadyExistsError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 __all__ = ["SqlAlchemyUnitOfWork"]
@@ -18,7 +19,9 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if exc_type:
-            await self.rollback()
+        if exc_type is None:
+            await self._session.commit()
         else:
-            await self.commit()
+            await self._session.rollback()
+
+        
