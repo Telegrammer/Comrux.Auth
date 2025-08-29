@@ -46,7 +46,13 @@ from infrastructure.adapters.gateways import (
     SqlAlchemyUserQueryGateway,
 )
 
-from presentation.handlers import JwtAuthInfoPresenter, AuthInfoPresenter, LoginHandler, RefreshHandler
+from presentation.handlers import (
+    JwtAuthInfoPresenter,
+    AuthInfoPresenter,
+    LoginHandler,
+    RefreshHandler,
+    RegisterHandler,
+)
 from presentation.models import JwtInfo, AuthInfo
 
 
@@ -108,7 +114,6 @@ class DomainProvider(Provider):
         )
 
     access_key_service = provide(AccessKeyService)
-    
 
 
 class ApplicationProvider(Provider):
@@ -151,7 +156,7 @@ class PresentationProvider(Provider):
                 minutes=settings.auth.access_token_expire_minutes
             ),
         )
-    
+
     @provide(scope=Scope.APP)
     def provide_jwt_presentation(self, settings: Settings) -> JwtAuthInfoPresenter:
         return JwtAuthInfoPresenter(
@@ -162,17 +167,15 @@ class PresentationProvider(Provider):
                 minutes=settings.auth.access_token_expire_minutes
             ),
         )
-    
+
     auth_info = provide(source=JwtInfo, provides=AuthInfo)
-    
+
+    register_handler = provide(source=RegisterHandler)
     login_handler = provide(LoginHandler)
-    
+
     @provide
     @staticmethod
-    def provide_refresh_handler(usecase: RefreshUsecase, presenter: AuthInfoPresenter) -> RefreshHandler:
-        return RefreshHandler(
-            StatelessRefreshRequest,
-            usecase,
-            presenter
-        )
-
+    def provide_refresh_handler(
+        usecase: RefreshUsecase, presenter: AuthInfoPresenter
+    ) -> RefreshHandler:
+        return RefreshHandler(StatelessRefreshRequest, usecase, presenter)
