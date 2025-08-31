@@ -1,14 +1,28 @@
 from typing import Sequence
+
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from asyncpg.exceptions import UniqueViolationError
+
+
 from domain import User
 from domain.value_objects import Id, Email
+
+from application.query_params import UserListParams
 from application.ports.mappers import UserMapper
 from application.exceptions import UserAlreadyExistsError, UserNotFoundError
-from application.query_params import UserListParams
+from application.exceptions import create_error_aware_decorator
+from application.ports.gateways.errors import GatewayFailedError
 from infrastructure.models import User as ORMUser
+
+
+network_error_aware = create_error_aware_decorator({
+    frozenset({ConnectionRefusedError, ConnectionResetError}) : GatewayFailedError
+})
+
+from application.ports.gateways.errors import GatewayFailedError
 
 __all__ = ["SqlAlchemyUserCommandGateway", "SqlAlchemyUserQueryGateway"]
 
@@ -19,18 +33,21 @@ class SqlAlchemyUserCommandGateway:
         self._session: AsyncSession = session
         self._mapper: UserMapper = mapper
     
+    @network_error_aware("Cannot add user: users are not reachable")
     async def add(self, user: User):
         try:
             orm_user: ORMUser = self._mapper.to_dto(user)
             self._session.add(orm_user)
             await self._session.flush()
         except IntegrityError as e:
-            await self._session.rollback()
             if getattr(e.orig, "sqlstate", None) == UniqueViolationError.sqlstate:
                 raise UserAlreadyExistsError("User with same contacts already exists")
             raise
 
-    async def delete(self, user: User): ...
+    @network_error_aware("Cannot delete user: users not found")
+    async def delete(self, user: User) -> None:
+        orm_user = self._mapper.to_dto(user)
+        await self._session.delete(orm_user)
 
 
 class SqlAlchemyUserQueryGateway:
