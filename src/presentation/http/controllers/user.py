@@ -13,6 +13,7 @@ from application.exceptions import (
     ExpiredAccessKeyError,
 )
 from application.ports.mappers.errors import MappingError
+from application.ports.gateways.errors import GatewayFailedError
 
 from presentation.handlers import (
     LoginHandler,
@@ -50,15 +51,16 @@ def create_register_user_router() -> APIRouter:
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             UserAlreadyExistsError: status.HTTP_409_CONFLICT,
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE
         },
         response_model=None,
     )
     @inject
     async def register(
         request_body: UserCreate,
-        interactor: FromDishka[RegisterHandler],
+        handler: FromDishka[RegisterHandler],
     ):
-        await interactor(request_body)
+        await handler(request_body)
 
     return router
 
@@ -98,12 +100,12 @@ def create_refresh_router() -> APIRouter:
     @inject
     async def refresh_token(
         jwt_presenter: FromDishka[JwtAuthInfoPresenter],
-        refresh_handler: FromDishka[RefreshHandler],
+        handler: FromDishka[RefreshHandler],
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
 
         auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
-        return await refresh_handler(auth_info)
+        return await handler(auth_info)
 
     return router
 
