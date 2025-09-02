@@ -24,6 +24,7 @@ dishka = "^1.6.0"
 alembic = "^1.16.4"
 pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 fastapi-error-map = "^0.9.6"
+faststream = "^0.5.48"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
