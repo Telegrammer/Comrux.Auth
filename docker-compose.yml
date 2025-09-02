@@ -10,6 +10,31 @@ services:
 #        - "8000:8000"
 #      volumes:
 #        - .:/auth
+
+  redis:
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    env_file:
+      - ./redis/.env
+    healthcheck:
+      test: ["CMD", "redis-cli", "-u", "redis://my_user:redis-user-cisco@127.0.0.1:6379", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redis_insight
+    ports:
+      - "5540:5540"
+    restart: unless-stopped
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -28,3 +53,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
