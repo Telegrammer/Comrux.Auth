@@ -10,6 +10,7 @@ from typing import AsyncGenerator
 from datetime import timedelta
 from dishka import Provider, provide, Scope, from_context
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis, from_url
 from sqlalchemy import MetaData
 from setup.db_helper import DatabaseHelper
 from setup.config import Settings
@@ -24,26 +25,30 @@ from application.ports import (
     UnitOfWork,
     UserMapper,
     Clock,
+    AccessKeyCommandGateway,
+    AccessKeyQueryGateway,
 )
 from application import (
     RegisterUserUsecase,
     PasswordLoginUsecase,
     RefreshUsecase,
-    RefreshRequest,
     StatelessRefreshUsecase,
     StatelessRefreshRequest,
 )
 
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
 from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
-from infrastructure.adapters.sqlalchemy_unit_of_work import SqlAlchemyUnitOfWork
 from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.access_key_uuid4_generator import AccessKeyUuid4Generator
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
+from infrastructure.adapters.sqlalchemy_transaction import SqlAlchemyTransaction
+from infrastructure.adapters.redis_transaction import RedisTransaction
 
 from infrastructure.adapters.gateways import (
     SqlAlchemyUserCommandGateway,
     SqlAlchemyUserQueryGateway,
+    RedisAccessKeyQueryGateway,
+    RedisAccessKeyCommandGateway,
 )
 
 from presentation.handlers import (
@@ -79,19 +84,25 @@ class DatabaseProvider(Provider):
             max_overflow=settings.db.max_overflow,
         )
 
+    unit_of_work = provide(UnitOfWork, scope=Scope.REQUEST)
+
     @provide(scope=Scope.REQUEST)
-    async def provide_session(
-        self, db_helper: DatabaseHelper
+    async def provide_user_session(
+        self, db_helper: DatabaseHelper, unit_of_work: UnitOfWork
     ) -> AsyncGenerator[AsyncSession, None]:
         async with db_helper.session_factory() as session:
+            unit_of_work.add(SqlAlchemyTransaction(session))
             yield session
 
     @provide(scope=Scope.REQUEST)
-    async def provide_unit_of_work(
-        self, session: AsyncSession
-    ) -> AsyncGenerator[UnitOfWork, None]:
-        async with SqlAlchemyUnitOfWork(session) as unit_of_work:
-            yield unit_of_work
+    async def provide_access_key_client(
+        self, settings: Settings, unit_of_work: UnitOfWork
+    ) -> AsyncGenerator[Redis, None]:
+        async with Redis.pipeline(
+            from_url(str(settings.cache.url)), transaction=True
+        ) as client:
+            unit_of_work.add(RedisTransaction(client))
+            yield client
 
 
 class DomainProvider(Provider):
@@ -136,6 +147,13 @@ class ApplicationProvider(Provider):
         source=SqlAlchemyUserQueryGateway, provides=UserQueryGateway
     )
 
+    access_key_command_gateway = provide(
+        source=RedisAccessKeyCommandGateway, provides=AccessKeyCommandGateway
+    )
+    access_key_query_gateway = provide(
+        source=RedisAccessKeyQueryGateway, provides=AccessKeyQueryGateway
+    )
+
     register_user = provide(RegisterUserUsecase)
     login_user = provide(PasswordLoginUsecase)
     refresh = provide(source=StatelessRefreshUsecase, provides=RefreshUsecase)
@@ -174,8 +192,7 @@ class PresentationProvider(Provider):
     login_handler = provide(LoginHandler)
 
     @provide
-    @staticmethod
     def provide_refresh_handler(
-        usecase: RefreshUsecase, presenter: AuthInfoPresenter
+        self, usecase: RefreshUsecase, presenter: AuthInfoPresenter
     ) -> RefreshHandler:
         return RefreshHandler(StatelessRefreshRequest, usecase, presenter)
