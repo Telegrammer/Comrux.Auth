@@ -5,10 +5,11 @@ import inspect
 from typing import Type, Callable, TypeAlias
 
 import functools
-from application.exceptions.base import ApplicationError, ErrorFactory
+from application.exceptions.base import ApplicationError
 
 
 type ErrorFactory = Callable[[Exception], ApplicationError]
+
 
 def error_aware(
     error_map: dict[type[BaseException] | frozenset[type[BaseException]], ErrorFactory],
@@ -25,7 +26,7 @@ def error_aware(
         def handle_error(unknown: Exception) -> None:
             excepted_error_factory = flatten_error_map.get(type(unknown), None)
             if not excepted_error_factory:
-                raise 
+                raise
             raise excepted_error_factory(unknown) from unknown
 
         @functools.wraps(func)
@@ -47,10 +48,11 @@ def error_aware(
     return decorator
 
 
-
 def create_error_aware_decorator(
-    base_error_map: dict[Type[Exception] | frozenset[Type[Exception]], ApplicationError]
-):  
+    base_error_map: dict[
+        Type[Exception] | frozenset[Type[Exception]], ApplicationError
+    ],
+):
     def outer(default_message: str | None = None):
 
         def decorator(func=None, *, error_map=None):
@@ -69,4 +71,5 @@ def create_error_aware_decorator(
             return error_aware(factory_map)(func) if func else error_aware(factory_map)
 
         return decorator
+
     return outer

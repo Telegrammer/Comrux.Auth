@@ -1,1 +1,1 @@
-from .handlers import network_error_aware
+from .common import error_aware, create_error_aware_decorator
