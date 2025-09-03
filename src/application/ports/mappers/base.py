@@ -21,3 +21,6 @@ class DataMapper[Tdto](ABC):
 
 
 class UserMapper[Tdto](DataMapper): ...
+
+
+class AccessKeyMapper[Tdto](DataMapper): ...
