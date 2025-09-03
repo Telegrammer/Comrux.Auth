@@ -1,4 +1,2 @@
 from .user import SqlAlchemyUserCommandGateway, SqlAlchemyUserQueryGateway
-
-
-__all__ = ["SqlAlchemyUserCommandGateway", "SqlAlchemyUserQueryGateway"]
+from .access_key import RedisAccessKeyCommandGateway, RedisAccessKeyQueryGateway
