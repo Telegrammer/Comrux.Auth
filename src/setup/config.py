@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, field_validator
-from pydantic import PostgresDsn
+from pydantic import PostgresDsn, RedisDsn
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -61,6 +61,10 @@ class DatabaseConfig(BaseModel):
     }
 
 
+class CacheConfig(BaseModel):
+    url: RedisDsn
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env_app",
@@ -70,6 +74,7 @@ class Settings(BaseSettings):
     )
     run: RunConfig = RunConfig()
     db: DatabaseConfig
+    cache: CacheConfig
     auth: JwtAuthConfig
 
 
