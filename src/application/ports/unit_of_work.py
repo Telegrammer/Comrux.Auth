@@ -1,23 +1,20 @@
-from typing import Protocol
+from .transaction import Transaction
 
 
-from abc import abstractmethod
+class UnitOfWork:
+    def __init__(self):
+        self._transactions: list[Transaction] = []
 
+    def add(self, transaction: Transaction) -> None:
+        self._transactions.append(transaction)
 
-class UnitOfWork(Protocol):
-
-    @abstractmethod
-    async def commit(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def rollback(self):
-        raise NotImplementedError
-
-    @abstractmethod
     async def __aenter__(self):
-        raise NotImplementedError
+        return self
 
-    @abstractmethod
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        raise NotImplementedError
+        if exc_type is None:
+            for transaction in self._transactions:
+                await transaction.complete()
+        else:
+            for transaction in self._transactions:
+                await transaction.cancel()
