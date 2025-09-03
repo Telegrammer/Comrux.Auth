@@ -1,6 +1,6 @@
 from .user import UserAlreadyExistsError, UserNotFoundError, UserAuthenticationError
 from .access_key import ExpiredAccessKeyError
-from .base import ApplicationError, ErrorFactory
+from .base import ApplicationError
 
 __all__ = [
     "UserAlreadyExistsError",
@@ -8,5 +8,4 @@ __all__ = [
     "UserAuthenticationError",
     "ExpiredAccessKeyError",
     "ApplicationError",
-    "ErrorFactory"
 ]

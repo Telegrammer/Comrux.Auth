@@ -34,5 +34,6 @@ class LoginUserResponse(TypedDict):
 class LoginUsecase:
 
     @abstractmethod
-    async def __call__(self, request: LoginUserRequest) -> LoginUserResponse | None: ...
+    async def __call__(self, request: LoginUserRequest) -> LoginUserResponse:
+        raise NotImplementedError
 

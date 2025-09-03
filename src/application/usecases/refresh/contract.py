@@ -36,4 +36,5 @@ class RefreshResponse(TypedDict):
 class RefreshUsecase:
 
     @abstractmethod
-    async def __call__(self, request: RefreshRequest) -> RefreshResponse | None: ...
+    async def __call__(self, request: RefreshRequest) -> RefreshResponse:
+        raise NotImplementedError
