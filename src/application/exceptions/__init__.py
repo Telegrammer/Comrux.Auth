@@ -1,5 +1,5 @@
 from .user import UserAlreadyExistsError, UserNotFoundError, UserAuthenticationError
-from .access_key import ExpiredAccessKeyError
+from .access_key import ExpiredAccessKeyError, AccessKeyNotFound
 from .base import ApplicationError
 
 __all__ = [
@@ -8,4 +8,5 @@ __all__ = [
     "UserAuthenticationError",
     "ExpiredAccessKeyError",
     "ApplicationError",
+    "AccessKeyNotFound",
 ]
