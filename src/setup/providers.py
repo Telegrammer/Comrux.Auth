@@ -92,6 +92,10 @@ class DatabaseProvider(Provider):
             pool_size=settings.db.pool_size,
             max_overflow=settings.db.max_overflow,
         )
+    
+    @provide
+    def provide_base_model_metadata(self, settings: Settings) -> MetaData:
+        return MetaData(naming_convention=settings.db.naming_convention)
 
     unit_of_work = provide(UnitOfWork, scope=Scope.REQUEST)
 
@@ -140,10 +144,6 @@ class ApplicationProvider(Provider):
     scope = Scope.REQUEST
 
     settings = from_context(Settings, scope=Scope.APP)
-
-    @provide(scope=Scope.APP)
-    def provide_base_model_metadata(self, settings: Settings) -> MetaData:
-        return MetaData(naming_convention=settings.db.naming_convention)
 
     timestamp_clock = provide(source=TimestampClock, provides=Clock)
 

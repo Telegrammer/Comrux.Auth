@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, field_validator
 from pydantic import PostgresDsn, RedisDsn
 from pathlib import Path
+from enum import StrEnum
+
 
 BASE_DIR = Path(__file__).parent.parent.parent
 

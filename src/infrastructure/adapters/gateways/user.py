@@ -13,14 +13,14 @@ from domain.value_objects import Id, Email
 from application.query_params import UserListParams
 from application.ports.mappers import UserMapper
 from application.exceptions import UserAlreadyExistsError, UserNotFoundError
-from application.exceptions import create_error_aware_decorator
 from application.ports.gateways.errors import GatewayFailedError
-from infrastructure.models import User as ORMUser
+from infrastructure.models import User as ORMUser, Base
+from infrastructure.exceptions.common import create_error_aware_decorator
 
 
-network_error_aware = create_error_aware_decorator({
-    frozenset({ConnectionRefusedError, ConnectionResetError}) : GatewayFailedError
-})
+network_error_aware = create_error_aware_decorator(
+    {frozenset({ConnectionRefusedError, ConnectionResetError}): GatewayFailedError}
+)
 
 from application.ports.gateways.errors import GatewayFailedError
 
@@ -32,7 +32,7 @@ class SqlAlchemyUserCommandGateway:
     def __init__(self, session: AsyncSession, mapper: UserMapper):
         self._session: AsyncSession = session
         self._mapper: UserMapper = mapper
-    
+
     @network_error_aware("Cannot add user: users are not reachable")
     async def add(self, user: User):
         try:
@@ -40,11 +40,17 @@ class SqlAlchemyUserCommandGateway:
             self._session.add(orm_user)
             await self._session.flush()
         except IntegrityError as e:
-            if getattr(e.orig, "sqlstate", None) == UniqueViolationError.sqlstate:
-                raise UserAlreadyExistsError("User with same contacts already exists")
-            raise
+            original_error = e.orig
+            if getattr(original_error, "sqlstate", None) != UniqueViolationError.sqlstate:
+                raise
 
-    @network_error_aware("Cannot delete user: users not found")
+            error_detail: str = str(original_error).split("\n")[1]
+            if error_detail.startswith("DETAIL:  Key (id_)"):
+                raise GatewayFailedError("Somehow user created with the same id. Please try again")
+
+            raise UserAlreadyExistsError("User with same data already exists")
+
+    @network_error_aware("Cannot delete user: we don't know where are the users")
     async def delete(self, user: User) -> None:
         orm_user = self._mapper.to_dto(user)
         await self._session.delete(orm_user)
