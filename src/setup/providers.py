@@ -51,13 +51,22 @@ from infrastructure.adapters.gateways import (
     RedisAccessKeyCommandGateway,
 )
 
-from presentation.handlers import (
+from presentation.handlers.adapters import (
+    RefreshTokenBuilder,
+    StateLessRefreshTokenBuilder,
     JwtAuthInfoPresenter,
+)
+
+from presentation.handlers.ports import (
     AuthInfoPresenter,
+)
+
+from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
     RegisterHandler,
 )
+
 from presentation.models import JwtInfo, AuthInfo
 
 
@@ -163,9 +172,10 @@ class PresentationProvider(Provider):
     scope = Scope.REQUEST
 
     settings = from_context(Settings, scope=Scope.APP)
+    token_builder = provide(source=StateLessRefreshTokenBuilder, provides=RefreshTokenBuilder, scope=Scope.APP)
 
     @provide(scope=Scope.APP)
-    def provide_auth_info_presentation(self, settings: Settings) -> AuthInfoPresenter:
+    def provide_jwt_presentation(self, settings: Settings, token_builder: RefreshTokenBuilder) -> JwtAuthInfoPresenter:
         return JwtAuthInfoPresenter(
             secret_key=settings.auth.secret_key.read_text(),
             public_key=settings.auth.public_key.read_text(),
@@ -173,24 +183,23 @@ class PresentationProvider(Provider):
             access_token_expiration_time=timedelta(
                 minutes=settings.auth.access_token_expire_minutes
             ),
+            token_builder=token_builder
         )
-
+    
     @provide(scope=Scope.APP)
-    def provide_jwt_presentation(self, settings: Settings) -> JwtAuthInfoPresenter:
-        return JwtAuthInfoPresenter(
-            secret_key=settings.auth.secret_key.read_text(),
-            public_key=settings.auth.public_key.read_text(),
-            algorithm=settings.auth.algorithm,
-            access_token_expiration_time=timedelta(
-                minutes=settings.auth.access_token_expire_minutes
-            ),
-        )
+    def provide_auth_info_presentation(self, presenter: JwtAuthInfoPresenter) -> AuthInfoPresenter:
+        return presenter
+
 
     auth_info = provide(source=JwtInfo, provides=AuthInfo)
 
     register_handler = provide(source=RegisterHandler)
     login_handler = provide(LoginHandler)
 
+
+    # I made this kind of realization with type of request instead of polymorph
+    # because i don't want to create another nesting, like i did it earlier with usecases
+    # TODO: it would be better to make it without pointing of request type
     @provide
     def provide_refresh_handler(
         self, usecase: RefreshUsecase, presenter: AuthInfoPresenter
