@@ -86,7 +86,7 @@ class JwtAuthInfoPresenter(AuthInfoPresenter):
 
         return AuthInfo(
             key_id=payload["sub"],
-            user_id=payload["user_id"],
-            created_at=payload["iat"],
-            expire_at=payload["exp"],
+            user_id=payload.get("user_id", None),
+            created_at=payload.get("iat", None),
+            expire_at=payload.get("exp", None),
         )
