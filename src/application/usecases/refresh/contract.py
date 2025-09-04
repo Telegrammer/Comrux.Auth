@@ -6,14 +6,13 @@ from typing import TypedDict, Protocol
 from abc import abstractmethod
 
 from domain import UserId, AccessKeyId, AccessKey
-from domain.value_objects import PassedDatetime, FutureDatetime
+from domain.value_objects import PassedDatetime
 
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class RefreshRequest(Protocol):
 
     access_key_id: AccessKeyId
-    user_id: UserId
 
     @classmethod
     @abstractmethod

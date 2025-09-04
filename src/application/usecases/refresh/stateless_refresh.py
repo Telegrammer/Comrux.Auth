@@ -15,6 +15,7 @@ from application.exceptions import ExpiredAccessKeyError
 @dataclass(slots=True, kw_only=True, frozen=True)
 class StatelessRefreshRequest(RefreshRequest):
 
+    user_id: UserId
     created_at: PassedDatetime
     expire_at: FutureDatetime
 

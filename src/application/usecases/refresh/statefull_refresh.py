@@ -3,12 +3,12 @@ __all__ = ["StatefullRefreshRequest", "StatefullRefreshUsecase"]
 from datetime import datetime
 from dataclasses import dataclass
 
-from domain import AccessKeyId, AccessKey, UserId, AccessKeyService
-from domain.value_objects import PassedDatetime, FutureDatetime
+from domain import AccessKeyId, AccessKey, AccessKeyService
 
-from .contract import RefreshRequest, RefreshResponse, RefreshUsecase
+from .contract import RefreshRequest, RefreshResponse
 
 from application.ports import Clock, AccessKeyQueryGateway
+from application.exceptions import ExpiredAccessKeyError
 
 
 @dataclass(slots=True, kw_only=True, frozen=True)
@@ -17,14 +17,12 @@ class StatefullRefreshRequest(RefreshRequest):
     @classmethod
     def from_primitives(
         cls,
-        *,
-        key_id_primitive: str,
-        user_id_primitive: str,
+        **kwargs
+
     ) -> "StatefullRefreshRequest":
 
         return cls(
-            access_key_id=AccessKeyId(key_id_primitive),
-            user_id=UserId(user_id_primitive),
+            access_key_id=AccessKeyId(kwargs["key_id"]),
         )
 
 
@@ -42,21 +40,15 @@ class StatefullRefreshUsecase:
 
     async def __call__(
         self, request: StatefullRefreshRequest
-    ) -> RefreshResponse | None:
+    ) -> RefreshResponse:
 
         now: datetime = self._clock.now()
 
-        found_key: AccessKey | None = await self._access_key_gateway.by_id(
+        found_key: AccessKey = await self._access_key_gateway.by_id(
             request.access_key_id.value
         )
 
-        if not found_key:
-            return None
-
-        if found_key.user_id != request.user_id:
-            return None
-
         if not self._access_key_service.can_refresh(found_key, now):
-            return None
+            raise ExpiredAccessKeyError("Access key expired: need to re-login")
 
         return RefreshResponse.from_entity(found_key, now)
