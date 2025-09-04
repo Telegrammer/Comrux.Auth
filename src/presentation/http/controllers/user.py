@@ -11,6 +11,7 @@ from application.exceptions import (
     UserNotFoundError,
     UserAuthenticationError,
     ExpiredAccessKeyError,
+    AccessKeyNotFound,
 )
 from application.ports.mappers.errors import MappingError
 from application.ports.gateways.errors import GatewayFailedError
@@ -94,6 +95,8 @@ def create_refresh_router() -> APIRouter:
             InvalidTokenTypeError: status.HTTP_401_UNAUTHORIZED,
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
+            AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
+            MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         },
         response_model=JwtInfo,
     )
