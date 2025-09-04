@@ -27,13 +27,14 @@ from application.ports import (
     Clock,
     AccessKeyCommandGateway,
     AccessKeyQueryGateway,
+    AccessKeyMapper
 )
 from application import (
     RegisterUserUsecase,
     PasswordLoginUsecase,
     RefreshUsecase,
-    StatelessRefreshUsecase,
-    StatelessRefreshRequest,
+    StatefullRefreshUsecase,
+    StatefullRefreshRequest,
 )
 
 from infrastructure.adapters.bcrypt_hasher import BcryptPasswordHasher
@@ -41,6 +42,7 @@ from infrastructure.adapters.user_uuid4_generator import UserUuid4Generator
 from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.access_key_uuid4_generator import AccessKeyUuid4Generator
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
+from infrastructure.adapters.mappers.access_key import RedisAccessKeyMapper
 from infrastructure.adapters.sqlalchemy_transaction import SqlAlchemyTransaction
 from infrastructure.adapters.redis_transaction import RedisTransaction
 
@@ -53,7 +55,7 @@ from infrastructure.adapters.gateways import (
 
 from presentation.handlers.adapters import (
     RefreshTokenBuilder,
-    StateLessRefreshTokenBuilder,
+    StatefullRefreshTokenBuilder,
     JwtAuthInfoPresenter,
 )
 
@@ -148,6 +150,7 @@ class ApplicationProvider(Provider):
     timestamp_clock = provide(source=TimestampClock, provides=Clock)
 
     user_mapper = provide(source=SqlAlchemyUserMapper, provides=UserMapper)
+    access_key_mapper=provide(source=RedisAccessKeyMapper, provides=AccessKeyMapper)
 
     user_command_gateway = provide(
         source=SqlAlchemyUserCommandGateway, provides=UserCommandGateway
@@ -165,14 +168,14 @@ class ApplicationProvider(Provider):
 
     register_user = provide(RegisterUserUsecase)
     login_user = provide(PasswordLoginUsecase)
-    refresh = provide(source=StatelessRefreshUsecase, provides=RefreshUsecase)
+    refresh = provide(source=StatefullRefreshUsecase, provides=RefreshUsecase)
 
 
 class PresentationProvider(Provider):
     scope = Scope.REQUEST
 
     settings = from_context(Settings, scope=Scope.APP)
-    token_builder = provide(source=StateLessRefreshTokenBuilder, provides=RefreshTokenBuilder, scope=Scope.APP)
+    token_builder = provide(source=StatefullRefreshTokenBuilder, provides=RefreshTokenBuilder, scope=Scope.APP)
 
     @provide(scope=Scope.APP)
     def provide_jwt_presentation(self, settings: Settings, token_builder: RefreshTokenBuilder) -> JwtAuthInfoPresenter:
@@ -204,4 +207,4 @@ class PresentationProvider(Provider):
     def provide_refresh_handler(
         self, usecase: RefreshUsecase, presenter: AuthInfoPresenter
     ) -> RefreshHandler:
-        return RefreshHandler(StatelessRefreshRequest, usecase, presenter)
+        return RefreshHandler(StatefullRefreshRequest, usecase, presenter)
