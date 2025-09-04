@@ -1,4 +1,4 @@
-__all__ = ["UserMapper"]
+__all__ = ["UserMapper", "AccessKeyMapper"]
 
 from abc import ABC, abstractmethod
 
