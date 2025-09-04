@@ -2,7 +2,7 @@ from domain import Entity, User, Uuid4, Email, PhoneNumber, PasswordHash
 
 from infrastructure.models import User as OrmUser
 from application.ports.mappers import UserMapper
-from .common import to_dto, to_domain
+from .common import to_dto
 
 
 __all__ = ["SqlAlchemyUserMapper"]
