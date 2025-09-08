@@ -6,6 +6,7 @@ from .timestamp_clock import *
 from .access_key_uuid4_generator import *
 from .sqlalchemy_transaction import *
 from .redis_transaction import *
+from .redis_adapter import *
 
 __all__ = [
     "BcryptPasswordHasher",
@@ -14,5 +15,6 @@ __all__ = [
     "SqlAlchemyUserQueryGateway",
     "SqlAlchemyUserMapper",
     "TimestampClock",
-    "AccessKeyUuid4Generator"
+    "AccessKeyUuid4Generator",
+    "RedisAdapter",
 ]
