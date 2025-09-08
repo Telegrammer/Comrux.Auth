@@ -24,7 +24,7 @@ from presentation.handlers import (
 )
 from presentation.models import (
     UserCreate,
-    UserLogin,
+    PasswordUserLogin,
     UserRead,
     JwtInfo,
     SessionInfo,
@@ -80,7 +80,7 @@ def create_login_router() -> APIRouter:
         response_model=JwtInfo | SessionInfo,
     )
     @inject
-    async def login(request_body: UserLogin, handler: FromDishka[LoginHandler]):
+    async def login(request_body: PasswordUserLogin, handler: FromDishka[LoginHandler]):
         return await handler(request_body)
 
     return router
