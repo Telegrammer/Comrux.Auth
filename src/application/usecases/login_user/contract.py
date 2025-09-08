@@ -1,8 +1,8 @@
-__all__ = ["LoginUserRequest", "LoginUsecase", "LoginUserResponse"]
+__all__ = ["LoginUserRequest", "LoginUsecase", "LoginUserResponse", "LoginMethod"]
 
 from dataclasses import dataclass
 from typing import TypedDict, Protocol
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from domain import UserId, AccessKeyId, AccessKey
 from domain.value_objects import PassedDatetime, FutureDatetime
@@ -27,13 +27,24 @@ class LoginUserResponse(TypedDict):
             key_id=entity.id_,
             user_id=entity.user_id,
             created_at=entity.created_at,
-            expire_at=entity.expire_at
+            expire_at=entity.expire_at,
         )
 
 
-class LoginUsecase:
+class LoginMethod:
+
+    @abstractmethod
+    async def __call__(self, request: LoginUserRequest) -> AccessKey:
+        raise NotImplementedError
+
+
+class LoginUsecase(ABC):
+
+    def __init__(self, login_method: LoginMethod):
+        print(login_method)
+        self._core: LoginMethod = login_method
+
 
     @abstractmethod
     async def __call__(self, request: LoginUserRequest) -> LoginUserResponse:
         raise NotImplementedError
-

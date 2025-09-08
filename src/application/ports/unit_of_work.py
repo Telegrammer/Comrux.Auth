@@ -6,6 +6,7 @@ class UnitOfWork:
         self._transactions: list[Transaction] = []
 
     def add(self, transaction: Transaction) -> None:
+        print(transaction)
         self._transactions.append(transaction)
 
     async def __aenter__(self):
