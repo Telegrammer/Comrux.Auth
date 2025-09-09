@@ -13,7 +13,7 @@ class AccessKeyCommandGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, access_key: AccessKey) -> None:
+    async def delete(self, access_key: AccessKeyId) -> None:
         raise NotImplementedError
 
 
