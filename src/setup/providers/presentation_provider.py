@@ -13,6 +13,7 @@ from presentation.handlers import (
     RefreshHandler,
     RegisterHandler,
     CurrentUserHandler,
+    LogoutHandler,
 )
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
@@ -78,5 +79,6 @@ class PresentationProvider(Provider):
         self, usecase: RefreshUsecase, presenter: AuthInfoPresenter
     ) -> RefreshHandler:
         return RefreshHandler(StatefullRefreshRequest, usecase, presenter)
-    
+
     current_user_handler = provide(CurrentUserHandler)
+    logout_user_handler = provide(LogoutHandler)
