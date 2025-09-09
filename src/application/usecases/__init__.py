@@ -1,3 +1,4 @@
 from .register_user import *
 from .login_user import *
 from .refresh import *
+from .get_current_user import *
