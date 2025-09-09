@@ -12,6 +12,7 @@ from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
     RegisterHandler,
+    CurrentUserHandler,
 )
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
@@ -63,8 +64,10 @@ class PresentationProvider(Provider):
         self, container: AsyncContainer
     ) -> dict[Type[UserLogin], tuple[LoginMethod, Type[LoginUserRequest]]]:
         return {
-            PasswordUserLogin:
-            (await container.get(PasswordLoginMethod), PasswordLoginUserRequest),
+            PasswordUserLogin: (
+                await container.get(PasswordLoginMethod),
+                PasswordLoginUserRequest,
+            ),
         }
 
     login_factory = provide(LoginUsecaseFactory)
@@ -75,3 +78,5 @@ class PresentationProvider(Provider):
         self, usecase: RefreshUsecase, presenter: AuthInfoPresenter
     ) -> RefreshHandler:
         return RefreshHandler(StatefullRefreshRequest, usecase, presenter)
+    
+    current_user_handler = provide(CurrentUserHandler)
