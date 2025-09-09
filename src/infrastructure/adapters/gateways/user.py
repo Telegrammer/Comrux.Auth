@@ -7,14 +7,14 @@ from sqlalchemy.exc import IntegrityError
 from asyncpg.exceptions import UniqueViolationError
 
 
-from domain import User
-from domain.value_objects import Id, Email
+from domain import User, UserId
+from domain.value_objects import Email
 
 from application.query_params import UserListParams
 from application.ports.mappers import UserMapper
 from application.exceptions import UserAlreadyExistsError, UserNotFoundError
 from application.ports.gateways.errors import GatewayFailedError
-from infrastructure.models import User as ORMUser, Base
+from infrastructure.models import User as ORMUser
 from infrastructure.exceptions.common import create_error_aware_decorator
 
 
@@ -41,12 +41,17 @@ class SqlAlchemyUserCommandGateway:
             await self._session.flush()
         except IntegrityError as e:
             original_error = e.orig
-            if getattr(original_error, "sqlstate", None) != UniqueViolationError.sqlstate:
+            if (
+                getattr(original_error, "sqlstate", None)
+                != UniqueViolationError.sqlstate
+            ):
                 raise
 
             error_detail: str = str(original_error).split("\n")[1]
             if error_detail.startswith("DETAIL:  Key (id_)"):
-                raise GatewayFailedError("Somehow user created with the same id. Please try again")
+                raise GatewayFailedError(
+                    "Somehow user created with the same id. Please try again"
+                )
 
             raise UserAlreadyExistsError("User with same data already exists")
 
@@ -65,7 +70,7 @@ class SqlAlchemyUserQueryGateway:
     async def read_all(self, params: UserListParams) -> Sequence[User] | None:
         return None
 
-    async def by_id(self, user_id: Id) -> User:
+    async def by_id(self, user_id: UserId) -> User:
         stmt = select(ORMUser).where(ORMUser.id_ == user_id)
         response = await self._session.execute(stmt)
         user = response.scalar_one_or_none()
