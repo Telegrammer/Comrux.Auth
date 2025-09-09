@@ -19,7 +19,11 @@ type_mismatch_aware = create_error_aware_decorator(
 )
 
 
+# TODO: resolve nest problem with create_error_aware_decorator
 class RedisAccessKeyMapper(AccessKeyMapper[DbAccessKey]):
+
+    def to_string(self, id_: AccessKeyId) -> str:
+        return f"access_key:{id_}"
 
     def to_dto(self, entity: AccessKey) -> DbAccessKey:
         try:

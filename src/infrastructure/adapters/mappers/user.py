@@ -1,4 +1,4 @@
-from domain import Entity, User, Uuid4, Email, PhoneNumber, PasswordHash
+from domain import Entity, User, Uuid4, Email, PhoneNumber, PasswordHash, UserId
 
 from infrastructure.models import User as OrmUser
 from application.ports.mappers import UserMapper
@@ -10,6 +10,9 @@ __all__ = ["SqlAlchemyUserMapper"]
 
 class SqlAlchemyUserMapper(UserMapper[OrmUser]):
 
+    def to_string(self, id_: UserId) -> str:
+        return str(id_)
+
     def to_dto(self, entity: Entity) -> OrmUser:
         return to_dto(entity, OrmUser)
 
@@ -18,5 +21,5 @@ class SqlAlchemyUserMapper(UserMapper[OrmUser]):
             id_=Uuid4(dto.id_.__str__()),
             email=Email(dto.email),
             phone=PhoneNumber(dto.phone),
-            password_hash=PasswordHash(dto.password_hash)
+            password_hash=PasswordHash(dto.password_hash),
         )
