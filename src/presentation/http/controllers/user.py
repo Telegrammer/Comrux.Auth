@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi_error_map import ErrorAwareRouter, rule
+from fastapi_error_map import ErrorAwareRouter
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from dishka.integrations.fastapi import FromDishka, inject
 from starlette import status
 
 from domain.exceptions import DomainFieldError
-from application.ports import UnitOfWork, UserQueryGateway
 from application.exceptions import (
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -21,6 +20,7 @@ from presentation.handlers import (
     RefreshHandler,
     JwtAuthInfoPresenter,
     RegisterHandler,
+    CurrentUserHandler,
 )
 from presentation.models import (
     UserCreate,
@@ -35,8 +35,6 @@ from presentation.exceptions import (
     InvalidTokenTypeError,
 )
 
-import jwt
-from setup import settings
 
 user_router = APIRouter(prefix="/user", tags=["user"])
 
@@ -52,7 +50,7 @@ def create_register_user_router() -> APIRouter:
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             UserAlreadyExistsError: status.HTTP_409_CONFLICT,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
         },
         response_model=None,
     )
@@ -113,31 +111,35 @@ def create_refresh_router() -> APIRouter:
     return router
 
 
-@user_router.get(
-    "/me",
-)
-@inject
-async def current_user(
-    unit_of_work: FromDishka[UnitOfWork],
-    gateway: FromDishka[UserQueryGateway],
-    token: HTTPAuthorizationCredentials = Depends(http_bearer),
-):
+def create_current_user_router():
 
-    response = jwt.decode(
-        jwt=token.credentials,
-        key=settings.auth.public_key.read_text(),
-        algorithms=settings.auth.algorithm,
+    router = ErrorAwareRouter()
+
+    @router.get(
+        "/me",
+        error_map={
+            InvalidTokenTypeError: status.HTTP_401_UNAUTHORIZED,
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+            ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
+            UserNotFoundError: status.HTTP_401_UNAUTHORIZED,
+            MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        },
+        response_model=UserRead,
     )
+    @inject
+    async def current_user(
+        handler: FromDishka[CurrentUserHandler],
+        jwt_presenter: FromDishka[JwtAuthInfoPresenter],
+        token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    ):
 
-    async with unit_of_work:
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "access")
+        return await handler(auth_info)
 
-        user = await gateway.by_id(response["user_id"])
-
-        return UserRead(email=user.email, phone=user.phone, user_id=user.id_)
+    return router
 
 
 user_router.include_router(create_register_user_router())
-
 user_router.include_router(create_login_router())
-
 user_router.include_router(create_refresh_router())
+user_router.include_router(create_current_user_router())
