@@ -21,6 +21,7 @@ from presentation.handlers import (
     JwtAuthInfoPresenter,
     RegisterHandler,
     CurrentUserHandler,
+    LogoutHandler,
 )
 from presentation.models import (
     UserCreate,
@@ -52,6 +53,7 @@ def create_register_user_router() -> APIRouter:
             UserAlreadyExistsError: status.HTTP_409_CONFLICT,
             GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
         },
+        status_code=status.HTTP_201_CREATED,
         response_model=None,
     )
     @inject
@@ -122,6 +124,7 @@ def create_current_user_router():
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
             UserNotFoundError: status.HTTP_401_UNAUTHORIZED,
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         },
         response_model=UserRead,
@@ -139,7 +142,34 @@ def create_current_user_router():
     return router
 
 
+def create_logout_router():
+
+    router = ErrorAwareRouter()
+
+    @router.delete(
+        "/logout",
+        error_map={
+            DomainFieldError: status.HTTP_401_UNAUTHORIZED,
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
+        },
+        status_code=status.HTTP_204_NO_CONTENT,
+        response_model=None,
+    )
+    @inject
+    async def logout(
+        handler: FromDishka[LogoutHandler],
+        jwt_presenter: FromDishka[JwtAuthInfoPresenter],
+        token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    ):
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
+        return await handler(auth_info)
+
+    return router
+
+
 user_router.include_router(create_register_user_router())
 user_router.include_router(create_login_router())
 user_router.include_router(create_refresh_router())
 user_router.include_router(create_current_user_router())
+user_router.include_router(create_logout_router())
