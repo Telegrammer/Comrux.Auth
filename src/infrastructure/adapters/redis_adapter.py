@@ -12,6 +12,10 @@ class RedisAdapter:
         self._client: Redis = original_client
         self.hset = self._client.hset
         self.expire = self._client.expire
+        self.hdel = self._client.hdel
+        self.delete = self._client.delete
+        self.sadd = self._client.sadd
+        self.srem = self._client.srem
 
     @decode
     @makefun.wraps(Redis.hgetall)
