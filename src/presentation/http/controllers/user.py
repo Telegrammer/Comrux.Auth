@@ -22,6 +22,7 @@ from presentation.handlers import (
     RegisterHandler,
     CurrentUserHandler,
     LogoutHandler,
+    LogoutAllHandler
 )
 from presentation.models import (
     UserCreate,
@@ -167,9 +168,35 @@ def create_logout_router():
 
     return router
 
+def create_logout_all_router():
+
+    router = ErrorAwareRouter()
+
+    @router.delete(
+        "/logout-all",
+        error_map={
+            DomainFieldError: status.HTTP_401_UNAUTHORIZED,
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
+        },
+        status_code=status.HTTP_204_NO_CONTENT,
+        response_model=None,
+    )
+    @inject
+    async def logout_all(
+        handler: FromDishka[LogoutAllHandler],
+        jwt_presenter: FromDishka[JwtAuthInfoPresenter],
+        token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    ):
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
+        return await handler(auth_info)
+
+    return router
+
 
 user_router.include_router(create_register_user_router())
 user_router.include_router(create_login_router())
 user_router.include_router(create_refresh_router())
 user_router.include_router(create_current_user_router())
 user_router.include_router(create_logout_router())
+user_router.include_router(create_logout_all_router())
