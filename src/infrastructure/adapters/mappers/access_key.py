@@ -10,7 +10,7 @@ from functools import singledispatchmethod
 
 
 from application.ports.mappers import AccessKeyMapper, MappingError
-from infrastructure.models import AccessKey as DbAccessKey
+from infrastructure.models import AccessKeyDto
 from infrastructure.exceptions import create_error_aware_decorator
 from pydantic import ValidationError
 
@@ -20,15 +20,15 @@ type_mismatch_aware = create_error_aware_decorator(
 
 
 # TODO: resolve nest problem with create_error_aware_decorator
-class RedisAccessKeyMapper(AccessKeyMapper[DbAccessKey]):
+class RedisAccessKeyMapper(AccessKeyMapper[AccessKeyDto]):
 
     def to_string(self, id_: AccessKeyId) -> str:
         return f"access_key:{id_}"
 
-    def to_dto(self, entity: AccessKey) -> DbAccessKey:
+    def to_dto(self, entity: AccessKey) -> AccessKeyDto:
         try:
-            return DbAccessKey(
-                id_=f"access_key:{entity.id_}",
+            return AccessKeyDto(
+                id_=entity.id_,
                 user_id=entity.user_id,
                 created_at=entity.created_at.isoformat(),
                 expire_at=entity.expire_at.isoformat(),
@@ -41,7 +41,7 @@ class RedisAccessKeyMapper(AccessKeyMapper[DbAccessKey]):
         raise MappingError(f"Unsupported dto type: {type(dto)}")
 
     @to_domain.register
-    def _(self, dto: DbAccessKey) -> AccessKey:
+    def _(self, dto: AccessKeyDto) -> AccessKey:
         try:
             issued_at: datetime = datetime.fromisoformat(dto.created_at)
             expire_at: datetime = datetime.fromisoformat(dto.expire_at)
@@ -56,4 +56,4 @@ class RedisAccessKeyMapper(AccessKeyMapper[DbAccessKey]):
 
     @to_domain.register
     def _(self, dto: dict) -> AccessKey:
-        return self.to_domain(DbAccessKey.model_validate(dto))
+        return self.to_domain(AccessKeyDto.model_validate(dto))
