@@ -81,8 +81,8 @@ class JwtAuthInfoPresenter(AuthInfoPresenter):
         except jwt.exceptions.ExpiredSignatureError:
             raise ExpiredAccessKeyError("Given Access key is expired")
 
-        if payload.get("type", None) != required_type:
-            raise InvalidTokenTypeError("Token is not refresh")
+        if required_type != "any" and payload.get("type", None) != required_type:
+            raise InvalidTokenTypeError(f"Token is not {required_type}")
 
         return AuthInfo(
             key_id=payload["sub"],
