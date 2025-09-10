@@ -23,3 +23,11 @@ class RedisAdapter:
         async with self._client.pipeline(transaction=False) as pipe:
             pipe.hgetall(*args, **kwargs)
             return await pipe.execute()
+        
+    
+    @makefun.wraps(Redis.smembers)
+    async def smembers(self, *args, **kwargs):
+        async with self._client.pipeline(transaction=False) as pipe:
+            pipe.smembers(*args, **kwargs)
+            result = await pipe.execute()
+            return next(iter(result))
