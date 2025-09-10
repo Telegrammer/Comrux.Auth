@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class AccessKey(BaseModel):
+class AccessKeyDto(BaseModel):
 
     id_: str
     user_id: str

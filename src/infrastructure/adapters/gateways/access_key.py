@@ -2,22 +2,57 @@ __all__ = ["RedisAccessKeyCommandGateway", "RedisAccessKeyQueryGateway"]
 
 
 from typing import Sequence
+import makefun
 
-from domain import AccessKey, User, AccessKeyId
+from domain import AccessKey, User, AccessKeyId, UserId
 
 from application.ports.gateways.errors import GatewayFailedError
 from application.ports import AccessKeyMapper
 from application.exceptions import AccessKeyNotFound
 from infrastructure.exceptions import create_error_aware_decorator
-from infrastructure.models import AccessKey as DbAccessKey
+from infrastructure.models import AccessKeyDto
 from ..redis_adapter import RedisAdapter as Redis
 
 network_error_aware = create_error_aware_decorator(
     {frozenset({ConnectionRefusedError, ConnectionResetError}): GatewayFailedError}
 )
 
+class DbUserIndex:
 
-# TODO: inject naming_convection for keys to remove repeating declaration
+    def __init__(self, user_id: UserId):
+        self._user_id = user_id
+    
+    def __str__(self):
+        return f"user_access_keys:{self._user_id}"
+class DbAccessKey:
+
+    def __init__(self, key: AccessKeyDto):
+        self._key = key
+
+    @property
+    def id_(self) -> str:
+        return f"access_key:{self._key.id_}"
+
+    @property
+    def user_index(self) -> str:
+        return str(DbUserIndex(self._key.user_id))
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "user_id": self._key.user_id,
+            "created_at": self._key.created_at,
+            "expire_at": self._key.expire_at,
+        }
+
+    @staticmethod
+    def create(obj: dict[str, str]) -> AccessKeyDto:
+        return AccessKeyDto.model_validate(obj)
+
+    @staticmethod
+    def create_id(access_key_id: AccessKeyId) -> str:
+        return f"access_key:{access_key_id}"
+
+
 class RedisAccessKeyCommandGateway:
 
     def __init__(self, client: Redis, mapper: AccessKeyMapper):
@@ -65,14 +100,14 @@ class RedisAccessKeyQueryGateway:
     async def by_id(self, access_key_id: AccessKeyId) -> AccessKey:
 
         found_key: dict[str, str] | None = await self._client.hgetall(
-            f"access_key:{access_key_id}"
+            DbAccessKey.create_id(access_key_id)
         )
 
         if not found_key:
             raise AccessKeyNotFound("Access key with given id does not exists")
 
         return self._mapper.to_domain(
-            DbAccessKey.model_validate({"id_": access_key_id, **found_key})
+            DbAccessKey.create({"id_": access_key_id, **found_key})
         )
 
     async def by_user(self, user: User) -> Sequence[AccessKey] | None:
