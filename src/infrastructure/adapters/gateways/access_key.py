@@ -61,31 +61,35 @@ class RedisAccessKeyCommandGateway:
 
     @network_error_aware("Cannot add access key: there is no place to add him")
     async def add(self, access_key: AccessKey) -> None:
-        db_access_key: DbAccessKey = self._mapper.to_dto(access_key)
-
-        user_index: str = f"user_access_keys:{db_access_key.user_id}"
-        key_id: str = f"access_key:{db_access_key.id_}"
+        db_access_key: DbAccessKey = DbAccessKey(self._mapper.to_dto(access_key))
 
         ttl: int = int((access_key.expire_at - access_key.created_at).total_seconds())
 
         await self._client.hset(
             db_access_key.id_,
-            mapping=db_access_key.model_dump(exclude={"id_"}),
+            mapping=db_access_key.as_dict(),
         )
         await self._client.expire(
             db_access_key.id_,
             ttl,
         )
-        await self._client.sadd(user_index, key_id)
-        await self._client.expire(user_index, ttl)
+        await self._client.sadd(db_access_key.user_index, db_access_key.id_)
+        await self._client.expire(db_access_key.user_index, ttl)
 
+    @network_error_aware("Cannot delete access key: can't reach to him")
     async def delete(self, access_key: AccessKey) -> None:
-        db_access_key: DbAccessKey = self._mapper.to_dto(access_key)
-        user_index: str = f"user_access_keys:{db_access_key.user_id}"
-        key_id: str = f"access_key:{db_access_key.id_}"
-
+        db_access_key: DbAccessKey = DbAccessKey(self._mapper.to_dto(access_key))
         await self._client.delete(db_access_key.id_)
-        await self._client.srem(user_index, key_id)
+        await self._client.srem(db_access_key.user_index, db_access_key.id_)
+
+    @network_error_aware("Cannot delete access keys: can't reach to them")
+    async def delete_keys_by_user_id(self, user_id: UserId) -> None:
+        user_index: str = str(DbUserIndex(user_id))
+        keys = await self._client.smembers(user_index)
+        if keys:
+            await self._client.delete(*keys)
+        await self._client.delete(user_index)
+
 
 
 class RedisAccessKeyQueryGateway:
