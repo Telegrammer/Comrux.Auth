@@ -5,3 +5,4 @@ from .current_user import *
 from .ports import *
 from .adapters import *
 from .logout import *
+from .logout_all import *
