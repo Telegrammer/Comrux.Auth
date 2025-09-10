@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol, Sequence
 
-from domain import User, AccessKey, AccessKeyId
+from domain import User, AccessKey, AccessKeyId, UserId
 
 __all__ = ["AccessKeyCommandGateway", "AccessKeyQueryGateway"]
 
@@ -13,7 +13,10 @@ class AccessKeyCommandGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, access_key: AccessKeyId) -> None:
+    async def delete(self, access_key: AccessKey) -> None:
+        raise NotImplementedError
+    
+    async def delete_keys_by_user_id(self, user_id: UserId) -> None:
         raise NotImplementedError
 
 
