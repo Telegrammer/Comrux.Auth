@@ -14,6 +14,7 @@ from presentation.handlers import (
     RegisterHandler,
     CurrentUserHandler,
     LogoutHandler,
+    LogoutAllHandler
 )
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
@@ -82,3 +83,4 @@ class PresentationProvider(Provider):
 
     current_user_handler = provide(CurrentUserHandler)
     logout_user_handler = provide(LogoutHandler)
+    logout_all_handler = provide(LogoutAllHandler)

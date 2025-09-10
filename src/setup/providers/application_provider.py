@@ -21,6 +21,7 @@ from application import (
     StatefullRefreshUsecase,
     GetCurrentUserUsecase,
     LogoutUsecase,
+    LogoutAllUsecase,
 )
 from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
@@ -77,3 +78,4 @@ class ApplicationProvider(Provider):
 
     get_current_user = provide(GetCurrentUserUsecase)
     logout_user = provide(LogoutUsecase)
+    logout_all = provide(LogoutAllUsecase)
