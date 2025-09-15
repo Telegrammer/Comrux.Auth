@@ -1,4 +1,4 @@
-from .user import UserAlreadyExistsError, UserNotFoundError, UserAuthenticationError
+from .user import *
 from .access_key import ExpiredAccessKeyError, AccessKeyNotFound
 from .base import ApplicationError
 
@@ -9,4 +9,5 @@ __all__ = [
     "ExpiredAccessKeyError",
     "ApplicationError",
     "AccessKeyNotFound",
+    "WrongPasswordError",
 ]

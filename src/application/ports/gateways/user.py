@@ -18,6 +18,10 @@ class UserCommandGateway(Protocol):
     @abstractmethod
     async def delete(self, user: User) -> None:
         raise NotImplementedError
+    
+    @abstractmethod
+    async def update(self, user: User) -> None:
+        raise NotImplementedError
 
 
 class UserQueryGateway(Protocol):
