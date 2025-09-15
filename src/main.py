@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dishka.integrations.fastapi import setup_dishka, FromDishka, inject
+from functools import partial
 
 from setup import (
     Settings,
@@ -18,6 +19,7 @@ from setup import (
 from domain import UserService
 
 from presentation.http.controllers.user import user_router
+from presentation.http.middleware import InjectCurrentUserIdMiddleware
 
 origins = ["http://localhost:8000", "http://127.0.0.1:3000", "http://localhost:3000"]
 
@@ -43,9 +45,12 @@ async def lifespan(app: FastAPI):
 
 
 auth_app = FastAPI(lifespan=lifespan)
-setup_dishka(container=container, app=auth_app)
 
 auth_app.include_router(user_router)
+auth_app.add_middleware(
+    InjectCurrentUserIdMiddleware
+)
+
 auth_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -54,6 +59,7 @@ auth_app.add_middleware(
     allow_headers=["*"],
 )
 
+setup_dishka(container=container, app=auth_app)
 
 @auth_app.get("/")
 @inject
