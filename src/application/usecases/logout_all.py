@@ -1,43 +1,21 @@
-__all__ = ["LogoutAllUserRequest", "LogoutAllUsecase"]
+__all__ = ["LogoutAllUsecase"]
 
 
-from dataclasses import dataclass
+from domain import User
 
-from domain import AccessKeyId, AccessKey
-
-from application.ports import AccessKeyCommandGateway, AccessKeyQueryGateway
-from application.exceptions import AccessKeyNotFound
-
-@dataclass
-class LogoutAllUserRequest:
-
-    access_key_id: AccessKeyId
-
-    @classmethod
-    def from_primitives(
-        cls, *, key_id: str, **_
-    ) -> "LogoutAllUserRequest":
-        return cls(access_key_id=key_id)
-
+from application.ports import AccessKeyCommandGateway
+from application.services import CurrentUserService
 
 class LogoutAllUsecase:
 
-
     def __init__(
         self,
-        access_key_commands: AccessKeyCommandGateway,
-        access_key_queries: AccessKeyQueryGateway,
+        current_user_service: CurrentUserService,
+        access_key_gateway: AccessKeyCommandGateway,
     ):
-        self._access_key_commands: AccessKeyCommandGateway = access_key_commands
-        self._access_key_queries: AccessKeyQueryGateway = access_key_queries
+        self._current_user_service: CurrentUserService = current_user_service
+        self._access_key_gateway: AccessKeyCommandGateway = access_key_gateway
 
-    async def __call__(self, request: LogoutAllUserRequest):
-        try:
-            found_key: AccessKey = await self._access_key_queries.by_id(
-                request.access_key_id
-            )
-        except AccessKeyNotFound:
-            return
-        
-        await self._access_key_commands.delete_keys_by_user_id(found_key.user_id)
-        
+    async def __call__(self):
+        current_user: User = await self._current_user_service()
+        await self._access_key_gateway.delete_keys_by_user_id(current_user.id_)

@@ -1,21 +1,10 @@
-__all__ = ["GetCurrentUserRequest", "GetCurrentUserUsecase", "GetCurrentUserResponse"]
+__all__ = ["GetCurrentUserUsecase", "GetCurrentUserResponse"]
 
 
-from dataclasses import dataclass
 from typing import TypedDict
 from domain import UserId, User
 from domain.value_objects import Email, PhoneNumber
-from application.ports import UserQueryGateway
-
-
-@dataclass
-@dataclass
-class GetCurrentUserRequest:
-    user_id: UserId
-
-    @classmethod
-    def from_primitives(cls, *, user_id: str, **_: object) -> "GetCurrentUserRequest":
-        return cls(user_id=UserId(user_id))
+from application.services import CurrentUserService
 
 
 class GetCurrentUserResponse(TypedDict):
@@ -31,9 +20,8 @@ class GetCurrentUserResponse(TypedDict):
 
 class GetCurrentUserUsecase:
 
-    def __init__(self, user_gateway: UserQueryGateway):
-        self._user_gateway: UserQueryGateway = user_gateway
+    def __init__(self, current_user_service: CurrentUserService):
+        self._current_user_service: CurrentUserService = current_user_service
 
-    async def __call__(self, request: GetCurrentUserRequest) -> GetCurrentUserResponse:
-        found_user: User = await self._user_gateway.by_id(request.user_id.value)
-        return GetCurrentUserResponse.from_entity(found_user)
+    async def __call__(self) -> GetCurrentUserResponse:
+        return GetCurrentUserResponse.from_entity(await self._current_user_service())

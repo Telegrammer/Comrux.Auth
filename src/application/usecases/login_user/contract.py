@@ -41,7 +41,6 @@ class LoginMethod:
 class LoginUsecase(ABC):
 
     def __init__(self, login_method: LoginMethod):
-        print(login_method)
         self._core: LoginMethod = login_method
 
 
