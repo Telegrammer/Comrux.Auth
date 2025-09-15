@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from fastapi_error_map import ErrorAwareRouter
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from dishka.integrations.fastapi import FromDishka, inject
@@ -11,10 +11,10 @@ from application.exceptions import (
     UserAuthenticationError,
     ExpiredAccessKeyError,
     AccessKeyNotFound,
+    WrongPasswordError,
 )
 from application.ports.mappers.errors import MappingError
 from application.ports.gateways.errors import GatewayFailedError
-
 from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
@@ -22,21 +22,24 @@ from presentation.handlers import (
     RegisterHandler,
     CurrentUserHandler,
     LogoutHandler,
-    LogoutAllHandler
+    LogoutAllHandler,
+    ChangePasswordHandler,
 )
 from presentation.models import (
     UserCreate,
     PasswordUserLogin,
+    PasswordChange,
     UserRead,
     JwtInfo,
     SessionInfo,
     AuthInfo,
 )
 
+from presentation.constans import TokenType
+
 from presentation.exceptions import (
     InvalidTokenTypeError,
 )
-
 
 user_router = APIRouter(prefix="/user", tags=["user"])
 
@@ -188,10 +191,40 @@ def create_logout_all_router():
         jwt_presenter: FromDishka[JwtAuthInfoPresenter],
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
-        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
-        return await handler(auth_info)
+        jwt_presenter.to_auth_info(token.credentials, "access")
+        return await handler()
 
     return router
+
+
+def create_change_password_router():
+    router = ErrorAwareRouter()
+
+
+    @router.patch(
+        "/change-password",
+        error_map={
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
+            ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
+            InvalidTokenTypeError: status.HTTP_403_FORBIDDEN,
+            WrongPasswordError: status.HTTP_403_FORBIDDEN,
+        },
+        status_code=status.HTTP_202_ACCEPTED,
+        response_model=None
+    )
+    @inject
+    async def change_password(
+        request_body: PasswordChange,
+        presenter: FromDishka[JwtAuthInfoPresenter],
+        handler: FromDishka[ChangePasswordHandler],
+        token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    ):  
+        presenter.to_auth_info(token.credentials, TokenType.ACCESS)
+        return await handler(request_body)
+    return router
+
 
 
 user_router.include_router(create_register_user_router())
@@ -200,3 +233,4 @@ user_router.include_router(create_refresh_router())
 user_router.include_router(create_current_user_router())
 user_router.include_router(create_logout_router())
 user_router.include_router(create_logout_all_router())
+user_router.include_router(create_change_password_router())
