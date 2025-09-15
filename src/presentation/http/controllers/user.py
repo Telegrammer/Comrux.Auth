@@ -140,8 +140,8 @@ def create_current_user_router():
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
 
-        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "access")
-        return await handler(auth_info)
+        jwt_presenter.to_auth_info(token.credentials, "access")
+        return await handler()
 
     return router
 

@@ -1,7 +1,10 @@
 from datetime import timedelta
-from typing import Type
+from typing import Type, Callable
 from dishka import Provider, provide, Scope, from_context, AsyncContainer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette.requests import Request
 from setup.config import Settings
+import functools
 from presentation.handlers.adapters import (
     RefreshTokenBuilder,
     StatefullRefreshTokenBuilder,
@@ -14,7 +17,8 @@ from presentation.handlers import (
     RegisterHandler,
     CurrentUserHandler,
     LogoutHandler,
-    LogoutAllHandler
+    LogoutAllHandler,
+    ChangePasswordHandler,
 )
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
@@ -24,11 +28,16 @@ from application import (
     PasswordLoginMethod,
     LoginUserRequest,
     PasswordLoginUserRequest,
+    BasicChangePasswordRequest,
 )
 
 
 class PresentationProvider(Provider):
     scope = Scope.REQUEST
+
+    @provide(scope=Scope.APP)
+    def provide_http_bearer(self) -> HTTPBearer:
+        return HTTPBearer()
 
     settings = from_context(Settings, scope=Scope.APP)
     token_builder = provide(
@@ -65,12 +74,14 @@ class PresentationProvider(Provider):
     async def provide_login_methods(
         self, container: AsyncContainer
     ) -> dict[Type[UserLogin], tuple[LoginMethod, Type[LoginUserRequest]]]:
+        container
         return {
             PasswordUserLogin: (
                 await container.get(PasswordLoginMethod),
                 PasswordLoginUserRequest,
             ),
         }
+
 
     login_factory = provide(LoginUsecaseFactory)
     login_handler = provide(LoginHandler)
@@ -84,3 +95,4 @@ class PresentationProvider(Provider):
     current_user_handler = provide(CurrentUserHandler)
     logout_user_handler = provide(LogoutHandler)
     logout_all_handler = provide(LogoutAllHandler)
+    change_password_handler = provide(ChangePasswordHandler)
