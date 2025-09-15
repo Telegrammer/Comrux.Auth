@@ -2,6 +2,7 @@ from dishka import Provider, provide, Scope, from_context
 from functools import partial
 from typing import Callable
 from setup.config import Settings
+from domain import UserId
 from application.ports import (
     UserCommandGateway,
     UserQueryGateway,
@@ -22,6 +23,10 @@ from application import (
     GetCurrentUserUsecase,
     LogoutUsecase,
     LogoutAllUsecase,
+    BasicChangePasswordUsecase
+)
+from application.services import (
+    CurrentUserService,
 )
 from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
@@ -40,6 +45,7 @@ class ApplicationProvider(Provider):
     scope = Scope.REQUEST
 
     settings = from_context(Settings, scope=Scope.APP)
+    user_id = from_context(UserId)
 
     timestamp_clock = provide(source=TimestampClock, provides=Clock)
 
@@ -47,7 +53,7 @@ class ApplicationProvider(Provider):
     access_key_mapper = provide(source=RedisAccessKeyMapper, provides=AccessKeyMapper)
 
     @provide
-    async def provide_access_key_gateway_client(self, client: Redis) -> RedisAdapter:
+    def provide_access_key_gateway_client(self, client: Redis) -> RedisAdapter:
         return RedisAdapter(client)
 
     user_command_gateway = provide(
@@ -73,9 +79,19 @@ class ApplicationProvider(Provider):
         self, gateway: AccessKeyCommandGateway
     ) -> Callable[[LoginMethod], LoginUsecase]:
         return partial(StatefullLoginUsecase, access_key_gateway=gateway)
-
+    
     refresh = provide(source=StatefullRefreshUsecase, provides=RefreshUsecase)
 
     get_current_user = provide(GetCurrentUserUsecase)
     logout_user = provide(LogoutUsecase)
     logout_all = provide(LogoutAllUsecase)
+    
+    @provide
+    def provide_current_user_service(
+        self,
+        gateway: UserQueryGateway,
+        user_id: UserId,  
+    ) -> CurrentUserService:
+        return CurrentUserService(user_gateway=gateway, user_id=user_id)
+    
+    change_password = provide(BasicChangePasswordUsecase)
