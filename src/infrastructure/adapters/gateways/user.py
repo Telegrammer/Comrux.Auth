@@ -59,6 +59,11 @@ class SqlAlchemyUserCommandGateway:
     async def delete(self, user: User) -> None:
         orm_user = self._mapper.to_dto(user)
         await self._session.delete(orm_user)
+    
+    async def update(self, user: User) -> None:
+        orm_user = self._mapper.to_dto(user)
+        await self._session.merge(orm_user)
+
 
 
 class SqlAlchemyUserQueryGateway:
