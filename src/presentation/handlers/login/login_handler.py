@@ -8,8 +8,8 @@ from application.usecases import (
 )
 
 from presentation.models import UserLogin, AuthInfo
-
-from .ports import AuthInfoPresenter, LoginUsecaseFactory
+from presentation.presenters import AuthInfoPresenter
+from .login_usecase_factory import LoginUsecaseFactory
 
 
 class LoginHandler:

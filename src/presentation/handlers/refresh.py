@@ -6,7 +6,7 @@ from application.usecases import (
     RefreshResponse,
 )
 
-from presentation.handlers.ports import AuthInfoPresenter
+from presentation.presenters import AuthInfoPresenter
 from presentation.models import AuthInfo
 
 

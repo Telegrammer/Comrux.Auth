@@ -18,7 +18,6 @@ from application.ports.gateways.errors import GatewayFailedError
 from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
-    JwtAuthInfoPresenter,
     RegisterHandler,
     CurrentUserHandler,
     LogoutHandler,
@@ -34,6 +33,7 @@ from presentation.models import (
     SessionInfo,
     AuthInfo,
 )
+from presentation.presenters import JwtAuthInfoPresenter
 
 from presentation.constans import TokenType
 
@@ -111,7 +111,9 @@ def create_refresh_router() -> APIRouter:
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
 
-        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(
+            token.credentials, TokenType.REFRESH
+        )
         return await handler(auth_info)
 
     return router
@@ -140,7 +142,7 @@ def create_current_user_router():
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
 
-        jwt_presenter.to_auth_info(token.credentials, "access")
+        jwt_presenter.validate(token.credentials, TokenType.ACCESS)
         return await handler()
 
     return router
@@ -166,10 +168,13 @@ def create_logout_router():
         jwt_presenter: FromDishka[JwtAuthInfoPresenter],
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
-        auth_info: AuthInfo = jwt_presenter.to_auth_info(token.credentials, "refresh")
+        auth_info: AuthInfo = jwt_presenter.to_auth_info(
+            token.credentials, TokenType.REFRESH
+        )
         return await handler(auth_info)
 
     return router
+
 
 def create_logout_all_router():
 
@@ -191,7 +196,7 @@ def create_logout_all_router():
         jwt_presenter: FromDishka[JwtAuthInfoPresenter],
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
-        jwt_presenter.to_auth_info(token.credentials, "access")
+        jwt_presenter.validate(token.credentials, TokenType.ACCESS)
         return await handler()
 
     return router
@@ -199,7 +204,6 @@ def create_logout_all_router():
 
 def create_change_password_router():
     router = ErrorAwareRouter()
-
 
     @router.patch(
         "/change-password",
@@ -212,7 +216,7 @@ def create_change_password_router():
             WrongPasswordError: status.HTTP_403_FORBIDDEN,
         },
         status_code=status.HTTP_202_ACCEPTED,
-        response_model=None
+        response_model=None,
     )
     @inject
     async def change_password(
@@ -220,11 +224,11 @@ def create_change_password_router():
         presenter: FromDishka[JwtAuthInfoPresenter],
         handler: FromDishka[ChangePasswordHandler],
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
-    ):  
-        presenter.to_auth_info(token.credentials, TokenType.ACCESS)
+    ):
+        presenter.validate(token.credentials, TokenType.ACCESS)
         return await handler(request_body)
-    return router
 
+    return router
 
 
 user_router.include_router(create_register_user_router())

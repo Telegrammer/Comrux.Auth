@@ -13,12 +13,8 @@ from presentation.exceptions import InvalidTokenTypeError
 from presentation.models import JwtInfo, AuthInfo
 from presentation.constans import TokenType
 
-from .base import AuthInfoPresenter, AuthInfoArgs
+from .base import AuthInfoPresenter
 from .refresh_token_builder import RefreshTokenBuilder
-
-
-class JwtInfoArgs(AuthInfoArgs):
-    required_token_type: TokenType
 
 
 class JwtAuthInfoPresenter(AuthInfoPresenter):
@@ -101,5 +97,5 @@ class JwtAuthInfoPresenter(AuthInfoPresenter):
             expire_at=payload.get("exp", None),
         )
 
-    def validate[bytes](self, raw_data: bytes, validation_args: JwtInfoArgs):
-        return super().validate(raw_data, validation_args)
+    def validate[bytes](self, raw_data: bytes, required_type: TokenType):
+        return super().validate(raw_data, required_type)

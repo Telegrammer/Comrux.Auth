@@ -1,8 +1,9 @@
-from .base import AuthInfoExtractor
-from presentation.handlers.ports.presenters import AuthInfoPresenter
-from presentation.models import AuthInfo
 from starlette.requests import Request
-from dishka import AsyncContainer
+
+from presentation.presenters import AuthInfoPresenter
+from presentation.models import AuthInfo
+
+from .base import AuthInfoExtractor
 
 
 class BearerAuthInfoExtractor(AuthInfoExtractor):
