@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from domain import AccessKeyId, AccessKey, UserId, AccessKeyService
 from domain.value_objects import PassedDatetime, FutureDatetime
 
-from .contract import RefreshRequest, RefreshResponse
+from .contract import RefreshRequest, RefreshResponse, RefreshUsecase
 
 from application.ports import Clock
 from application.exceptions import ExpiredAccessKeyError
@@ -32,7 +32,7 @@ class StatelessRefreshRequest(RefreshRequest):
         )
 
 
-class StatelessRefreshUsecase:
+class StatelessRefreshUsecase(RefreshUsecase[StatelessRefreshRequest]):
 
     def __init__(
         self,

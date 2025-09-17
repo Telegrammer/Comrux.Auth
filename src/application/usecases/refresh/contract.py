@@ -3,7 +3,7 @@ __all__ = ["RefreshRequest", "RefreshUsecase", "RefreshResponse"]
 from datetime import datetime
 from dataclasses import dataclass
 from typing import TypedDict, Protocol
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from domain import UserId, AccessKeyId, AccessKey
 from domain.value_objects import PassedDatetime
@@ -32,8 +32,8 @@ class RefreshResponse(TypedDict):
         return cls(key_id=entity.id_, user_id=entity.user_id, updated_at=updated_at)
 
 
-class RefreshUsecase:
+class RefreshUsecase[reqT: RefreshRequest](ABC):
 
     @abstractmethod
-    async def __call__(self, request: RefreshRequest) -> RefreshResponse:
+    async def __call__(self, request: reqT) -> RefreshResponse:
         raise NotImplementedError

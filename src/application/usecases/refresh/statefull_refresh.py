@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from domain import AccessKeyId, AccessKey, AccessKeyService
 
-from .contract import RefreshRequest, RefreshResponse
+from .contract import RefreshRequest, RefreshResponse, RefreshUsecase
 
 from application.ports import Clock, AccessKeyQueryGateway
 from application.exceptions import ExpiredAccessKeyError
@@ -26,7 +26,7 @@ class StatefullRefreshRequest(RefreshRequest):
         )
 
 
-class StatefullRefreshUsecase:
+class StatefullRefreshUsecase(RefreshUsecase[StatefullRefreshRequest]):
 
     def __init__(
         self,
