@@ -5,6 +5,8 @@ from domain import AccessKey
 from .contract import LoginUsecase, LoginMethod, LoginUserRequest, LoginUserResponse
 
 
+# In start of the making usecases, i thought that idea with single contract for all kind of type of usecase proparly working with OOP
+#
 class StatelessLoginUsecase(LoginUsecase):
 
     def __init__(self, login_method: LoginMethod):
