@@ -1,16 +1,13 @@
 from datetime import timedelta
-from typing import Type, Callable
+from typing import Type
 from dishka import Provider, provide, Scope, from_context, AsyncContainer
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.requests import Request
 from setup.config import Settings
-import functools
-from presentation.handlers.adapters import (
+from presentation.http.middleware.extratctors import AuthInfoExtractor, BearerAuthInfoExtractor
+from presentation.presenters.auth_info.refresh_token_builder import (
     RefreshTokenBuilder,
     StatefullRefreshTokenBuilder,
-    JwtAuthInfoPresenter,
 )
-from presentation.handlers.ports import AuthInfoPresenter, LoginUsecaseFactory
+from presentation.presenters import AuthInfoPresenter, JwtAuthInfoPresenter
 from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
@@ -20,6 +17,7 @@ from presentation.handlers import (
     LogoutAllHandler,
     ChangePasswordHandler,
 )
+from presentation.handlers.login import LoginUsecaseFactory
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
     RefreshUsecase,
@@ -28,18 +26,15 @@ from application import (
     PasswordLoginMethod,
     LoginUserRequest,
     PasswordLoginUserRequest,
-    BasicChangePasswordRequest,
 )
 
 
 class PresentationProvider(Provider):
     scope = Scope.REQUEST
 
-    @provide(scope=Scope.APP)
-    def provide_http_bearer(self) -> HTTPBearer:
-        return HTTPBearer()
-
     settings = from_context(Settings, scope=Scope.APP)
+
+    auth_info_extractor = provide(source=BearerAuthInfoExtractor, provides=AuthInfoExtractor, scope=Scope.APP)
     token_builder = provide(
         source=StatefullRefreshTokenBuilder,
         provides=RefreshTokenBuilder,
@@ -74,14 +69,12 @@ class PresentationProvider(Provider):
     async def provide_login_methods(
         self, container: AsyncContainer
     ) -> dict[Type[UserLogin], tuple[LoginMethod, Type[LoginUserRequest]]]:
-        container
         return {
             PasswordUserLogin: (
                 await container.get(PasswordLoginMethod),
                 PasswordLoginUserRequest,
             ),
         }
-
 
     login_factory = provide(LoginUsecaseFactory)
     login_handler = provide(LoginHandler)
