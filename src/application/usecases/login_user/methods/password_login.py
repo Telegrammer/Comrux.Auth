@@ -10,8 +10,7 @@ from domain.value_objects import Email, RawPassword
 from application.ports import Clock, UserQueryGateway
 from application.exceptions.user import UserAuthenticationError
 
-from ..contract import LoginUserRequest
-
+from ..contract import LoginUserRequest, LoginMethod
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class PasswordLoginUserRequest(LoginUserRequest):
@@ -28,7 +27,7 @@ class PasswordLoginUserRequest(LoginUserRequest):
         )
 
 
-class PasswordLoginMethod:
+class PasswordLoginMethod(LoginMethod[PasswordLoginUserRequest]):
 
     def __init__(
         self,

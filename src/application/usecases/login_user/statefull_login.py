@@ -6,15 +6,15 @@ from .contract import LoginUsecase, LoginMethod, LoginUserRequest, LoginUserResp
 from application.ports import AccessKeyCommandGateway
 
 
-class StatefullLoginUsecase(LoginUsecase):
+class StatefullLoginUsecase[reqT: LoginUserRequest](LoginUsecase):
 
     def __init__(
-        self, login_method: LoginMethod, access_key_gateway: AccessKeyCommandGateway
+        self, login_method: LoginMethod[reqT], access_key_gateway: AccessKeyCommandGateway
     ):
         super().__init__(login_method)
         self._access_key_gateway = access_key_gateway
 
-    async def __call__(self, request: LoginUserRequest) -> LoginUserResponse:
+    async def __call__(self, request: reqT) -> LoginUserResponse:
         savable_key: AccessKey = await self._core(request)
         await self._access_key_gateway.add(savable_key)
 

@@ -31,19 +31,19 @@ class LoginUserResponse(TypedDict):
         )
 
 
-class LoginMethod:
+class LoginMethod[reqT: LoginUserRequest](ABC):
 
     @abstractmethod
-    async def __call__(self, request: LoginUserRequest) -> AccessKey:
+    async def __call__(self, request: reqT) -> AccessKey:
         raise NotImplementedError
 
 
-class LoginUsecase(ABC):
+class LoginUsecase[reqT](ABC):
 
-    def __init__(self, login_method: LoginMethod):
-        self._core: LoginMethod = login_method
+    def __init__(self, login_method: LoginMethod[reqT]):
+        self._core: LoginMethod[reqT] = login_method
 
 
     @abstractmethod
-    async def __call__(self, request: LoginUserRequest) -> LoginUserResponse:
+    async def __call__(self, request: reqT) -> LoginUserResponse:
         raise NotImplementedError
