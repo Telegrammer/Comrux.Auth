@@ -10,7 +10,7 @@ from application.exceptions import ExpiredAccessKeyError
 from presentation.exceptions import InvalidTokenTypeError
 
 
-from presentation.models import JwtInfo, AuthInfo
+from presentation.models import JwtInfo, AuthInfo, PresentedAuthInfo
 from presentation.constans import TokenType
 
 from .base import AuthInfoPresenter
@@ -40,7 +40,7 @@ class JwtAuthInfoPresenter(AuthInfoPresenter):
             jwt=credentials, key=self._public_key, algorithms=self._algorithm
         )
 
-    def present(self, handler_response: AuthInfo) -> JwtInfo:
+    def present(self, handler_response: AuthInfo) -> PresentedAuthInfo:
 
         auth_info: dict = handler_response.model_dump()
 

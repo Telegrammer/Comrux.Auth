@@ -1,4 +1,4 @@
-__all__ = ["AuthInfo", "JwtInfo", "SessionInfo"]
+__all__ = ["AuthInfo", "JwtInfo", "SessionInfo", "PresentedAuthInfo"]
 
 
 from pydantic import BaseModel
@@ -11,12 +11,13 @@ class AuthInfo(BaseModel):
     created_at: datetime| None = None 
     expire_at: datetime | None = None
 
-
-class JwtInfo(BaseModel):
+class PresentedAuthInfo(BaseModel):
+    ...
+class JwtInfo(PresentedAuthInfo):
     access_token: str
     refresh_token: str | None
     token_type: str
 
 
-class SessionInfo(BaseModel):
+class SessionInfo(PresentedAuthInfo):
     session_id: str
