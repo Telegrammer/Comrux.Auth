@@ -23,7 +23,8 @@ from application import (
     GetCurrentUserUsecase,
     LogoutUsecase,
     LogoutAllUsecase,
-    BasicChangePasswordUsecase
+    BasicChangePasswordUsecase,
+    SensetiveDataChangeNotifier,
 )
 from application.services import (
     CurrentUserService,
@@ -32,6 +33,7 @@ from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
 from infrastructure.adapters.mappers.access_key import RedisAccessKeyMapper
 from infrastructure.adapters.redis_adapter import RedisAdapter
+from infrastructure.adapters.notifiers.sensetive_data_change import RedisStreamsSensetiveDataChangeNotifier
 from infrastructure.adapters.gateways import (
     SqlAlchemyUserCommandGateway,
     SqlAlchemyUserQueryGateway,
@@ -51,6 +53,10 @@ class ApplicationProvider(Provider):
 
     user_mapper = provide(source=SqlAlchemyUserMapper, provides=UserMapper)
     access_key_mapper = provide(source=RedisAccessKeyMapper, provides=AccessKeyMapper)
+
+    sensetive_data_change_notifier: SensetiveDataChangeNotifier = provide(
+        source=RedisStreamsSensetiveDataChangeNotifier, provides=SensetiveDataChangeNotifier
+    )
 
     @provide
     def provide_access_key_gateway_client(self, client: Redis) -> RedisAdapter:

@@ -16,8 +16,8 @@ from presentation.handlers import (
     LogoutHandler,
     LogoutAllHandler,
     ChangePasswordHandler,
+    LoginUsecaseFactory,
 )
-from presentation.handlers.login import LoginUsecaseFactory
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
     RefreshUsecase,
@@ -75,8 +75,8 @@ class PresentationProvider(Provider):
                 PasswordLoginUserRequest,
             ),
         }
-
-    login_factory = provide(LoginUsecaseFactory)
+    
+    login_usecase_fatory = provide(LoginUsecaseFactory)
     login_handler = provide(LoginHandler)
 
     @provide
