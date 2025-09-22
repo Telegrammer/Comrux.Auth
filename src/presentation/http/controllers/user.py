@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi_error_map import ErrorAwareRouter
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from dishka.integrations.fastapi import FromDishka, inject
 from starlette import status
-
+from typing import Annotated
 from domain.exceptions import DomainFieldError
 from application.exceptions import (
     UserAlreadyExistsError,
@@ -27,11 +27,11 @@ from presentation.handlers import (
 from presentation.models import (
     UserCreate,
     PasswordUserLogin,
-    PasswordChange,
     UserRead,
     JwtInfo,
     SessionInfo,
     AuthInfo,
+    PasswordChange
 )
 from presentation.presenters import JwtAuthInfoPresenter
 
@@ -223,10 +223,11 @@ def create_change_password_router():
         request_body: PasswordChange,
         presenter: FromDishka[JwtAuthInfoPresenter],
         handler: FromDishka[ChangePasswordHandler],
+        logout_all: bool = True,
         token: HTTPAuthorizationCredentials = Depends(http_bearer),
     ):
         presenter.validate(token.credentials, TokenType.ACCESS)
-        return await handler(request_body)
+        return await handler(request_body, logout_all)
 
     return router
 

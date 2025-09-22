@@ -16,7 +16,7 @@ def update_context(dispatch: Callable[[Request, Callable[[Request], Awaitable[Re
         prev_container: AsyncContainer = request.state.dishka_container
         app_container: AsyncContainer = prev_container.parent_container
 
-        new_context: dict[DependencyKey, object | Type] = await dispatch(request)
+        new_context: dict[DependencyKey, object | Type] = await dispatch(request) or {}
 
         async with app_container(context=merge_context(prev_container, new_context)) as request_container:
             request.state.dishka_container = request_container

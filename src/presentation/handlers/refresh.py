@@ -7,7 +7,7 @@ from application.usecases import (
 )
 
 from presentation.presenters import AuthInfoPresenter
-from presentation.models import AuthInfo
+from presentation.models import AuthInfo, PresentedAuthInfo
 
 
 class RefreshHandler:
@@ -19,7 +19,7 @@ class RefreshHandler:
         self._refresh_usecase = refresh_usecase
         self._auth_presenter = auth_presenter
 
-    async def __call__(self, request: AuthInfo) -> AuthInfo:
+    async def __call__(self, request: AuthInfo) -> PresentedAuthInfo:
         response: RefreshResponse = await self._refresh_usecase(
             self._request_type.from_primitives(**request.model_dump())
         )
