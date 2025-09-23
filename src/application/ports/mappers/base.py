@@ -15,11 +15,6 @@ class DataMapper[Tdto](ABC):
     ) -> Tdto:
         raise NotImplementedError
 
-    # TODO: don't know where to put. Need to resolve this
-    @abstractmethod
-    def to_string(self, id_: Id) -> str:
-        raise NotImplementedError
-
     @abstractmethod
     def to_domain(self, dto: Tdto) -> Entity:
         raise NotImplementedError
