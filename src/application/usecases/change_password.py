@@ -70,5 +70,5 @@ class BasicChangePasswordUsecase:
 
         if request.logout_all_after:
             await self._notifier.notify(
-                SensetiveDataChangePayload(current_user.id_, ("password"), now)
+                SensetiveDataChangePayload(current_user.id_, ["password"], now)
             )
