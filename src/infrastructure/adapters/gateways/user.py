@@ -75,6 +75,7 @@ class SqlAlchemyUserQueryGateway:
     async def read_all(self, params: UserListParams) -> Sequence[User] | None:
         return None
 
+    @network_error_aware("Cannot find user: can't reach to them")
     async def by_id(self, user_id: UserId) -> User:
         stmt = select(ORMUser).where(ORMUser.id_ == user_id)
         response = await self._session.execute(stmt)
@@ -84,6 +85,7 @@ class SqlAlchemyUserQueryGateway:
             raise UserNotFoundError("User with given id does not exist")
         return self._mapper.to_domain(user)
 
+    @network_error_aware("Cannot find user: can't reach to them")
     async def by_email(self, user_email: Email) -> User:
         stmt = select(ORMUser).where(ORMUser.email == user_email)
         response = await self._session.execute(stmt)

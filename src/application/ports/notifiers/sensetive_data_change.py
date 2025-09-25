@@ -10,8 +10,7 @@ from datetime import datetime
 class SensetiveDataChangePayload:
 
     user_id: UserId
-    changed_data_types: tuple[str]
-
+    changed_fields: list[str]
     occured: datetime
 
 
