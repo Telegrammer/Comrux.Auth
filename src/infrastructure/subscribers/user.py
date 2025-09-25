@@ -7,7 +7,7 @@ from faststream.redis import RedisRouter, StreamSub
 from application import UnitOfWork, LogoutAllUsecase
 from utils import generate_consumer_id
 
-from .models.user import UserSensetiveDataChange
+from infrastructure.models.messages import UserSensetiveDataChange
 
 sub_router = RedisRouter()
 
