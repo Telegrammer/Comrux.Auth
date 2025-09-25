@@ -3,7 +3,7 @@ from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InterfaceError
 from asyncpg.exceptions import UniqueViolationError
 
 
@@ -19,7 +19,7 @@ from infrastructure.exceptions.common import create_error_aware_decorator
 
 
 network_error_aware = create_error_aware_decorator(
-    {frozenset({ConnectionRefusedError, ConnectionResetError}): GatewayFailedError}
+    {frozenset({ConnectionRefusedError, ConnectionResetError, InterfaceError}): GatewayFailedError}
 )
 
 from application.ports.gateways.errors import GatewayFailedError
