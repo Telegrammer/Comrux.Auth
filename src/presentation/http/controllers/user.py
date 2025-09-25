@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi_error_map import ErrorAwareRouter
+from fastapi import APIRouter, Depends
+from fastapi_error_map import ErrorAwareRouter, rule
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from dishka.integrations.fastapi import FromDishka, inject
 from starlette import status
-from typing import Annotated
 from domain.exceptions import DomainFieldError
 from application.exceptions import (
     UserAlreadyExistsError,
@@ -31,7 +30,7 @@ from presentation.models import (
     JwtInfo,
     SessionInfo,
     AuthInfo,
-    PasswordChange
+    PasswordChange,
 )
 from presentation.presenters import JwtAuthInfoPresenter
 
@@ -39,11 +38,19 @@ from presentation.constans import TokenType
 
 from presentation.exceptions import (
     InvalidTokenTypeError,
+    ServiceUnavailableTranslator,
+    log_info,
+    log_error,
 )
 
 user_router = APIRouter(prefix="/user", tags=["user"])
 
 http_bearer = HTTPBearer()
+service_unavailable_rule = rule(
+    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+    translator=ServiceUnavailableTranslator(),
+    on_error=log_error,
+)
 
 
 def create_register_user_router() -> APIRouter:
@@ -55,8 +62,9 @@ def create_register_user_router() -> APIRouter:
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             UserAlreadyExistsError: status.HTTP_409_CONFLICT,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            GatewayFailedError: service_unavailable_rule,
         },
+        default_on_error=log_info,
         status_code=status.HTTP_201_CREATED,
         response_model=None,
     )
@@ -80,7 +88,9 @@ def create_login_router() -> APIRouter:
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             UserNotFoundError: status.HTTP_404_NOT_FOUND,
             UserAuthenticationError: status.HTTP_401_UNAUTHORIZED,
+            GatewayFailedError: service_unavailable_rule,
         },
+        default_on_error=log_info,
         response_model=JwtInfo | SessionInfo,
     )
     @inject
@@ -102,6 +112,7 @@ def create_refresh_router() -> APIRouter:
             AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         },
+        default_on_error=log_info,
         response_model=JwtInfo,
     )
     @inject
@@ -130,9 +141,10 @@ def create_current_user_router():
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
             ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
             UserNotFoundError: status.HTTP_401_UNAUTHORIZED,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            GatewayFailedError: service_unavailable_rule,
             MappingError: status.HTTP_500_INTERNAL_SERVER_ERROR,
         },
+        default_on_error=log_info,
         response_model=UserRead,
     )
     @inject
@@ -156,9 +168,10 @@ def create_logout_router():
         "/logout",
         error_map={
             DomainFieldError: status.HTTP_401_UNAUTHORIZED,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            GatewayFailedError: service_unavailable_rule,
             AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
         },
+        default_on_error=log_info,
         status_code=status.HTTP_204_NO_CONTENT,
         response_model=None,
     )
@@ -184,9 +197,10 @@ def create_logout_all_router():
         "/logout-all",
         error_map={
             DomainFieldError: status.HTTP_401_UNAUTHORIZED,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            GatewayFailedError: service_unavailable_rule,
             AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
         },
+        default_on_error=log_info,
         status_code=status.HTTP_204_NO_CONTENT,
         response_model=None,
     )
@@ -209,12 +223,13 @@ def create_change_password_router():
         "/change-password",
         error_map={
             DomainFieldError: status.HTTP_400_BAD_REQUEST,
-            GatewayFailedError: status.HTTP_503_SERVICE_UNAVAILABLE,
+            GatewayFailedError: service_unavailable_rule,
             AccessKeyNotFound: status.HTTP_401_UNAUTHORIZED,
             ExpiredAccessKeyError: status.HTTP_401_UNAUTHORIZED,
             InvalidTokenTypeError: status.HTTP_403_FORBIDDEN,
             WrongPasswordError: status.HTTP_403_FORBIDDEN,
         },
+        default_on_error=log_info,
         status_code=status.HTTP_202_ACCEPTED,
         response_model=None,
     )
