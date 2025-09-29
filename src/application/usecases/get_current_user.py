@@ -3,19 +3,19 @@ __all__ = ["GetCurrentUserUsecase", "GetCurrentUserResponse"]
 
 from typing import TypedDict
 from domain import UserId, User
-from domain.value_objects import Email, PhoneNumber
+from domain.value_objects import EmailAddress, PhoneNumber
 from application.services import CurrentUserService
 
 
 class GetCurrentUserResponse(TypedDict):
 
     user_id: UserId
-    email: Email
+    email: EmailAddress
     phone: PhoneNumber
 
     @classmethod
     def from_entity(cls, entity: User) -> "GetCurrentUserResponse":
-        return cls(user_id=entity.id_, email=entity.email, phone=entity.phone)
+        return cls(user_id=entity.id_, email=entity.email.address, phone=entity.phone)
 
 
 class GetCurrentUserUsecase:
