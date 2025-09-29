@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-from domain.value_objects import Email, PhoneNumber, RawPassword
+from domain.value_objects import EmailAddress, PhoneNumber, RawPassword
 from domain import User, UserService
 
 from application.ports import UserCommandGateway
@@ -10,14 +10,14 @@ __all__ = ["RegisterUserUsecase", "RegisterUserRequest"]
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class RegisterUserRequest:
-    email: Email
+    email: EmailAddress
     phone: PhoneNumber
     raw_password: RawPassword
 
     @classmethod
     def from_primitives(cls, *, email: str, phone: str, password: str):
         return cls(
-            email=Email(email),
+            email=EmailAddress(email),
             phone=PhoneNumber(phone),
             raw_password=RawPassword(password),
         )
