@@ -45,3 +45,6 @@ class Entity[IdT: Id](metaclass=EntityMeta):
 
     def __hash__(self) -> int:
         return hash((type(self), self.id_))
+
+@dataclass
+class AggregationRoot[IdT: Id](Entity[IdT]): ...
