@@ -1,7 +1,8 @@
-from domain import UserId
-import uuid
-from domain.ports import UserIdGenerator
+__all__ = ["UserUuid4Generator"]
 
+import uuid
+from domain import UserId
+from domain.ports import UserIdGenerator
 
 
 class UserUuid4Generator(UserIdGenerator):
