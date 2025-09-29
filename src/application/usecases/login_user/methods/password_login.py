@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from domain.entities import User, AccessKey
 from domain.services import UserService, AccessKeyService
-from domain.value_objects import Email, RawPassword
+from domain.value_objects import EmailAddress, RawPassword
 
 from application.ports import Clock, UserQueryGateway
 from application.exceptions.user import UserAuthenticationError
@@ -14,7 +14,7 @@ from ..contract import LoginUserRequest, LoginMethod
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class PasswordLoginUserRequest(LoginUserRequest):
-    email: Email
+    email: EmailAddress
     raw_password: RawPassword
 
     @classmethod
@@ -22,7 +22,7 @@ class PasswordLoginUserRequest(LoginUserRequest):
         cls, *, email: str, password: str
     ) -> "PasswordLoginUserRequest":
         return cls(
-            email=Email(email),
+            email=EmailAddress(email),
             raw_password=RawPassword(password),
         )
 
@@ -42,7 +42,7 @@ class PasswordLoginMethod(LoginMethod[PasswordLoginUserRequest]):
         self._access_key_service: AccessKeyService = access_key_serivce
 
     async def __call__(self, request: PasswordLoginUserRequest) -> AccessKey:
-        known_user: User = await self._user_gateway.by_email(request.email.value)
+        known_user: User = await self._user_gateway.by_email(request.email)
 
         if not self._user_service.is_password_valid(known_user, request.raw_password):
             raise UserAuthenticationError("given password is not valid")
