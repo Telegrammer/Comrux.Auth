@@ -8,18 +8,22 @@ from asyncpg.exceptions import UniqueViolationError
 
 
 from domain import User, UserId
-from domain.value_objects import Email
+from domain.value_objects import EmailAddress
 
 from application.query_params import UserListParams
 from application.ports.mappers import UserMapper
 from application.exceptions import UserAlreadyExistsError, UserNotFoundError
 from application.ports.gateways.errors import GatewayFailedError
-from infrastructure.models import User as ORMUser
+from infrastructure.models import User as OrmUser, Email as OrmEmail
 from infrastructure.exceptions.common import create_error_aware_decorator
 
 
 network_error_aware = create_error_aware_decorator(
-    {frozenset({ConnectionRefusedError, ConnectionResetError, InterfaceError}): GatewayFailedError}
+    {
+        frozenset(
+            {ConnectionRefusedError, ConnectionResetError, InterfaceError}
+        ): GatewayFailedError
+    }
 )
 
 from application.ports.gateways.errors import GatewayFailedError
@@ -36,7 +40,7 @@ class SqlAlchemyUserCommandGateway:
     @network_error_aware("Cannot add user: users are not reachable")
     async def add(self, user: User):
         try:
-            orm_user: ORMUser = self._mapper.to_dto(user)
+            orm_user: OrmUser = self._mapper.to_dto(user)
             self._session.add(orm_user)
             await self._session.flush()
         except IntegrityError as e:
@@ -57,13 +61,12 @@ class SqlAlchemyUserCommandGateway:
 
     @network_error_aware("Cannot delete user: we don't know where are the users")
     async def delete(self, user: User) -> None:
-        orm_user = self._mapper.to_dto(user)
+        orm_user: OrmUser = self._mapper.to_dto(user)
         await self._session.delete(orm_user)
-    
+
     async def update(self, user: User) -> None:
         orm_user = self._mapper.to_dto(user)
         await self._session.merge(orm_user)
-
 
 
 class SqlAlchemyUserQueryGateway:
@@ -77,7 +80,7 @@ class SqlAlchemyUserQueryGateway:
 
     @network_error_aware("Cannot find user: can't reach to them")
     async def by_id(self, user_id: UserId) -> User:
-        stmt = select(ORMUser).where(ORMUser.id_ == user_id)
+        stmt = select(OrmUser).where(OrmUser.id_ == user_id)
         response = await self._session.execute(stmt)
         user = response.scalar_one_or_none()
 
@@ -86,8 +89,12 @@ class SqlAlchemyUserQueryGateway:
         return self._mapper.to_domain(user)
 
     @network_error_aware("Cannot find user: can't reach to them")
-    async def by_email(self, user_email: Email) -> User:
-        stmt = select(ORMUser).where(ORMUser.email == user_email)
+    async def by_email(self, user_email: EmailAddress) -> User:
+        stmt = (
+            select(OrmUser)
+            .join(OrmUser.email)
+            .where(OrmEmail.address == user_email.value)
+        )
         response = await self._session.execute(stmt)
         user = response.scalar_one_or_none()
 
