@@ -1,25 +1,39 @@
-from domain import Entity, User, Uuid4, Email, PhoneNumber, PasswordHash, UserId
+from domain import User, Email, UserId, EmailId
+from domain.value_objects import EmailAddress, PhoneNumber, PasswordHash
 
-from infrastructure.models import User as OrmUser
+from infrastructure.models import User as OrmUser, Email as OrmEmail
 from application.ports.mappers import UserMapper
-from .common import to_dto
-
 
 __all__ = ["SqlAlchemyUserMapper"]
 
 
 class SqlAlchemyUserMapper(UserMapper[OrmUser]):
 
-    def to_string(self, id_: UserId) -> str:
-        return str(id_)
+    # TODO: got runtime-like casts in mappers. Need to remove this.
+    def to_dto(self, entity: User) -> OrmUser:
 
-    def to_dto(self, entity: Entity) -> OrmUser:
-        return to_dto(entity, OrmUser)
+        email: OrmEmail = OrmEmail(
+            id_=entity.email.id_,
+            address=entity.email.address,
+            is_verified=entity.email.is_verified,
+            user_id=entity.id_,
+        )
+        return OrmUser(
+            id_=entity.id_,
+            email=email,
+            phone=entity.phone,
+            password_hash=entity.password_hash,
+        )
 
     def to_domain(self, dto: OrmUser) -> User:
+        email: OrmEmail = dto.email
         return User(
-            id_=Uuid4(dto.id_.__str__()),
-            email=Email(dto.email),
+            id_=UserId(dto.id_.__str__()),
+            email=Email(
+                id_=EmailId(email.id_.__str__()),
+                address=EmailAddress(email.address),
+                is_verified=email.is_verified,
+            ),
             phone=PhoneNumber(dto.phone),
             password_hash=PasswordHash(dto.password_hash),
         )
