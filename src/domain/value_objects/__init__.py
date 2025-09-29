@@ -9,14 +9,13 @@ from .passed_datetime import *
 __all__ = [
     "ValueObject",
     "ValueObjectDescriptor",
-    "Email",
     "PhoneNumber",
     "Id",
     "PasswordHash",
-    "Email",
+    "EmailAddress",
     "PhoneNumber",
     "RawPassword",
     "Uuid4",
     "FutureDatetime",
-    "PassedDatetime"
+    "PassedDatetime",
 ]

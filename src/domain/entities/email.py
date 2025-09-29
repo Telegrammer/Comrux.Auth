@@ -1,7 +1,10 @@
+__all__ = ["Email", "EmailId"]
+
+
 from dataclasses import dataclass
 
-from domain import Entity
-from domain.value_objects import Uuid4, Email as EmailAddress
+from .base import Entity
+from domain.value_objects import Uuid4, EmailAddress
 
 
 class EmailId(Uuid4): ...

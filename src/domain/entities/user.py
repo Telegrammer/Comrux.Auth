@@ -1,14 +1,15 @@
 __all__ = ["UserId", "User"]
 
-from .base import AggregationRoot
-from ..value_objects import Email, PhoneNumber, PasswordHash, Uuid4
 from dataclasses import dataclass
+from ..value_objects import PhoneNumber, PasswordHash, Uuid4
+from .base import AggregationRoot
+from .email import Email
 
 
 class UserId(Uuid4): ...
 
 
-@dataclass
+@dataclass(kw_only=True)
 class User(AggregationRoot[UserId]):
     """
     :raises DomainFieldError

@@ -3,11 +3,11 @@ from .base import ValueObject
 from ..exceptions import DomainFieldError
 import re
 
-__all__ = ["Email"]
+__all__ = ["EmailAddress"]
 
 
 @dataclass
-class Email(ValueObject[str]):
+class EmailAddress(ValueObject[str]):
     def __post_init__(self):
         super().__post_init__()
         pattern: re.Pattern = re.compile(
