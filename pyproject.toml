@@ -26,6 +26,8 @@ pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 fastapi-error-map = "^0.9.6"
 faststream = "^0.5.48"
 makefun = "^1.16.0"
+itsdangerous = "^2.2.0"
+requests = "^2.32.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
