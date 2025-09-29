@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Protocol, Sequence
 
 from domain import User
-from domain.value_objects import Email, Id
+from domain.value_objects import Id, EmailAddress
 
 from application.query_params.user import UserListParams
 
@@ -35,5 +35,5 @@ class UserQueryGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def by_email(self, email: Email) -> User | None:
+    async def by_email(self, email: EmailAddress) -> User | None:
         raise NotImplementedError
