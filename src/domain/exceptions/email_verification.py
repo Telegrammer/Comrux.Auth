@@ -1,0 +1,9 @@
+from .base import DomainError
+
+
+class EmailVerificationObjectUsedError(DomainError): ...
+
+class EmailVerificationObjectExpiredError(DomainError): ...
+
+
+class EmailVerificationTokenMismatchError(DomainError): ...
