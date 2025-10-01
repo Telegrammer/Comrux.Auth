@@ -1,8 +1,9 @@
-from domain.entities import User
+from datetime import datetime
+
+from domain.entities import User, EmailVerification
 from domain.value_objects import RawPassword, PasswordHash, EmailAddress, PhoneNumber
 from domain.ports import PasswordHasher, UserIdGenerator
 from .email import EmailService
-
 
 class UserService:
 
@@ -34,5 +35,5 @@ class UserService:
         new_password_hash: PasswordHash = self._password_hasher.hash(new_password)
         user.password_hash = new_password_hash
 
-    def verify_email(self, user: User) -> None:
-        self._email_service.verify_email(user.email)
+    def verify_email(self, now: datetime, user: User, verification_object: EmailVerification) -> None:
+        self._email_service.verify_email(now, user.email, verification_object)

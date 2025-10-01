@@ -8,3 +8,9 @@ from dataclasses import dataclass
 class AccessKeyValidityPolicy:
     ttl: timedelta
     min_freshness_precentage: float
+
+
+@dataclass(frozen=True, slots=True)
+class EmailVerificationPolicy:
+    token_ttl: timedelta
+    min_freshness_precentage: float
