@@ -10,6 +10,7 @@ __all__ = ["RawPassword", "PasswordHash"]
 
 
 PASSWORD_MIN_LENGTH = 8
+PASSWORD_MAX_LENGTH = 1024
 PASSWORD_HASH_MIN_LENGTH = 10
 PASSWORD_HASH_MAX_LENGTH = 1024
 
@@ -27,6 +28,8 @@ class RawPassword(ValueObject[str]):
             raise DomainFieldError(
                 f"Password must be at least {PASSWORD_MIN_LENGTH} characters long"
             )
+        if len(self.value) > PASSWORD_MAX_LENGTH:
+            raise DomainFieldError("Password is too large")
         if not re.match(letter_pattern, self.value):
             raise DomainFieldError("Password must have at least one character")
         if not re.match(digit_pattern, self.value):
