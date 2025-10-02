@@ -11,6 +11,7 @@ from application.exceptions import (
     ExpiredAccessKeyError,
     AccessKeyNotFound,
     WrongPasswordError,
+    EmailVerificationObjectNotFound,
 )
 from application.ports.mappers.errors import MappingError
 from application.ports.gateways.errors import GatewayFailedError
@@ -18,6 +19,7 @@ from presentation.handlers import (
     LoginHandler,
     RefreshHandler,
     RegisterHandler,
+    SendEmailVerificationHandler,
     CurrentUserHandler,
     LogoutHandler,
     LogoutAllHandler,
@@ -31,6 +33,7 @@ from presentation.models import (
     SessionInfo,
     AuthInfo,
     PasswordChange,
+    RegisterUserResponse,
 )
 from presentation.presenters import JwtAuthInfoPresenter
 
@@ -66,16 +69,37 @@ def create_register_user_router() -> APIRouter:
         },
         default_on_error=log_info,
         status_code=status.HTTP_201_CREATED,
-        response_model=None,
+        response_model=RegisterUserResponse,
     )
     @inject
     async def register(
         request_body: UserCreate,
         handler: FromDishka[RegisterHandler],
     ):
-        await handler(request_body)
+        return await handler(request_body)
 
     return router
+
+def create_send_verification_email_router() -> APIRouter:
+    router = ErrorAwareRouter()
+
+    @router.post(
+        "/send_verification_email",
+        error_map={
+            DomainFieldError: status.HTTP_400_BAD_REQUEST,
+        },
+        status_code=status.HTTP_200_OK,
+        response_model=None,
+    )
+    @inject
+    async def register(
+        given_id: str,
+        handler: FromDishka[SendEmailVerificationHandler],
+    ):
+        return await handler(given_id)
+
+    return router
+
 
 
 def create_login_router() -> APIRouter:
@@ -248,6 +272,7 @@ def create_change_password_router():
 
 
 user_router.include_router(create_register_user_router())
+user_router.include_router(create_send_verification_email_router())
 user_router.include_router(create_login_router())
 user_router.include_router(create_refresh_router())
 user_router.include_router(create_current_user_router())
