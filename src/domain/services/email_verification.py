@@ -29,7 +29,7 @@ class EmailVerificationService:
             id_=self._id_generator(now),
             user_id=user_id,
             token_hash=self._hasher.hash(self._token_generator()),
-            expire_at=FutureDatetime(now, now + self._verification_policy.token_ttl)
+            expire_at=FutureDatetime(now + self._verification_policy.token_ttl, now=now)
         )
     
     def _is_fresh(self, verification_object: EmailVerification, now: datetime) -> bool:

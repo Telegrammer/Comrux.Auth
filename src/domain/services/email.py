@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from domain.entities import Email, EmailVerification
-from domain.services import EmailVerificationService
+from .email_verification import EmailVerificationService
 from domain.value_objects import EmailAddress
 from domain.ports import EmailIdGenerator
 
@@ -22,5 +22,5 @@ class EmailService:
         if not self._email_verification_service.is_token_valid(now, verification_object):
             raise EmailVerificationTokenMismatchError("Risky token: abort")
         
-        email.is_verified = True
         verification_object.use(now)
+        email.is_verified = True
