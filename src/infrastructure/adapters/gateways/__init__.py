@@ -1,2 +1,3 @@
 from .user import SqlAlchemyUserCommandGateway, SqlAlchemyUserQueryGateway
 from .access_key import RedisAccessKeyCommandGateway, RedisAccessKeyQueryGateway
+from .email_verification import RedisEmailVerificationCommandGateway, RedisEmailVerificationQueryGateway
