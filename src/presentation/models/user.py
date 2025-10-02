@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from pydantic import BaseModel, EmailStr
 from pydantic import UUID4
 from application import (
@@ -13,6 +14,7 @@ __all__ = [
     "PasswordUserLogin",
     "PasswordChange",
     "LoginUserRequestFactory",
+    "RegisterUserResponse",
 ]
 
 
@@ -29,10 +31,15 @@ class UserRead(BaseUser):
     user_id: UUID4
 
 
+class RegisterUserResponse(BaseModel):
+    user_id: str
+
+
 class UserLogin(BaseModel):
 
+    @abstractmethod
     def accept(self, visitor: "LoginUserRequestFactory") -> LoginUserRequest:
-        ...
+        raise NotImplementedError
 
 
 class PasswordUserLogin(UserLogin):
@@ -44,11 +51,11 @@ class PasswordUserLogin(UserLogin):
 
 
 class LoginUserRequestFactory:
+    """
+    Converts a Presentation Layer DTO (UserLogin) into the corresponding
+    Application layer LoginUserRequest.
+    """
 
-    """
-        Converts a Presentation Layer DTO (UserLogin) into the corresponding
-        Application layer LoginUserRequest.
-    """
     def handlePasswordLogin(self, request: PasswordUserLogin) -> LoginUserRequest:
         return PasswordLoginUserRequest.from_primitives(**request.model_dump())
 
