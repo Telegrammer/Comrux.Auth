@@ -1,4 +1,4 @@
-__all__ = ["UserMapper", "AccessKeyMapper"]
+__all__ = ["UserMapper", "AccessKeyMapper", "EmailVerififcationMapper"]
 
 from abc import ABC, abstractmethod
 
@@ -24,3 +24,6 @@ class UserMapper[Tdto](DataMapper): ...
 
 
 class AccessKeyMapper[Tdto](DataMapper): ...
+
+
+class EmailVerififcationMapper[Tdto](DataMapper): ...
