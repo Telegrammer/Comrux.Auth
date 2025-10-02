@@ -1,10 +1,11 @@
 import re
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from .base import ValueObject
 from ..exceptions import DomainFieldError
+from utils import extract_timestamp_from_uuid7
 
 
 __all__ = ["Id", "Uuid4", "Uuid7"]
@@ -33,7 +34,11 @@ class Uuid7(Id[str]):
 
     @property
     def issued_at(self) -> datetime:
-        return datetime.fromtimestamp(UUID(self.value).int >> 12 / 1000)
+        u = UUID(self.value)
+        timestamp_ns = extract_timestamp_from_uuid7(u)
+        # Конвертируем наносекунды в секунды (делим на 1e9)
+        timestamp_s = timestamp_ns / 1_000_000_000
+        return datetime.fromtimestamp(timestamp_s, tz=timezone.utc)
 
     def __post_init__(self):
         super().__post_init__()

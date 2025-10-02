@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ..exceptions import DomainError
-from ..value_objects import Uuid7, FutureDatetime
+from ..value_objects import Uuid7, FutureDatetime, TokenHash
 from .base import Entity
 from .user import UserId
 
@@ -18,12 +18,12 @@ class EmailVerification(Entity[Uuid7]):
 
     user_id: UserId
     expire_at: FutureDatetime
-    token_hash: bytes
+    token_hash: TokenHash
     used: bool = False
     used_at: datetime = None
 
     def __post_init__(self):
-        if self.id_.issued_at >= self.expire_at:
+        if getattr(self, "__object_id_").issued_at >= self.expire_at:
             raise DomainError(
                 "Email verification object have impossible/pointless lifetime"
             )
