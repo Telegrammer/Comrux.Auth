@@ -6,7 +6,7 @@ from application.usecases.register_user import (
 )
 
 from application.ports import UnitOfWork
-from presentation.models import UserCreate
+from presentation.models import UserCreate, RegisterUserResponse
 
 
 class RegisterHandler:
@@ -15,8 +15,10 @@ class RegisterHandler:
         self._register_usecase = register_usecase
         self._unit_of_work = unit_of_work
 
-    async def __call__(self, request: UserCreate) -> None:
+    async def __call__(self, request: UserCreate) -> RegisterUserResponse:
         async with self._unit_of_work:
-            await self._register_usecase(
-                RegisterUserRequest.from_primitives(**request.model_dump())
+            return RegisterUserResponse.model_validate(
+                await self._register_usecase(
+                    RegisterUserRequest.from_primitives(**request.model_dump())
+                )
             )
