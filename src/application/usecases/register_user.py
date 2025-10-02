@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-
+from typing import TypedDict
 
 from domain.value_objects import EmailAddress, PhoneNumber, RawPassword
-from domain import User, UserService
+from domain import User, UserService, UserId
 
 from application.ports import UserCommandGateway
 
 __all__ = ["RegisterUserUsecase", "RegisterUserRequest"]
+
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class RegisterUserRequest:
@@ -23,14 +24,23 @@ class RegisterUserRequest:
         )
 
 
+class RegisterUserResponse(TypedDict):
+    user_id: UserId
+
+    @classmethod
+    def from_entity(cls, entity: User) -> "RegisterUserResponse":
+        return cls(user_id=entity.id_)
+
+
 class RegisterUserUsecase:
 
     def __init__(self, service: UserService, command_gateway: UserCommandGateway):
         self._user_service = service
         self._user_gateway = command_gateway
 
-    async def __call__(
-        self, request: RegisterUserRequest
-    ) -> None:
-        new_user: User = self._user_service.create_user(request.email, request.phone, request.raw_password)
+    async def __call__(self, request: RegisterUserRequest) -> None:
+        new_user: User = self._user_service.create_user(
+            request.email, request.phone, request.raw_password
+        )
         await self._user_gateway.add(new_user)
+        return RegisterUserResponse.from_entity(new_user)
