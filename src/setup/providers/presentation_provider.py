@@ -17,6 +17,7 @@ from presentation.handlers import (
     LogoutAllHandler,
     ChangePasswordHandler,
     LoginUsecaseFactory,
+    SendEmailVerificationHandler,
 )
 from presentation.models import JwtInfo, AuthInfo, UserLogin, PasswordUserLogin
 from application import (
@@ -89,3 +90,4 @@ class PresentationProvider(Provider):
     logout_user_handler = provide(LogoutHandler)
     logout_all_handler = provide(LogoutAllHandler)
     change_password_handler = provide(ChangePasswordHandler)
+    send_email_verification_handler = provide(SendEmailVerificationHandler)

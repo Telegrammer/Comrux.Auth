@@ -11,9 +11,13 @@ from application.ports import (
     AccessKeyCommandGateway,
     AccessKeyQueryGateway,
     AccessKeyMapper,
+    EmailVerififcationMapper,
+    EmailVerificationCommandGateway,
+    EmailVerificationQueryGateway
 )
 from application import (
     RegisterUserUsecase,
+    SendEmailVerificationLinkUsecase,
     LoginUsecase,
     LoginMethod,
     PasswordLoginMethod,
@@ -32,6 +36,7 @@ from application.services import (
 from infrastructure.adapters.timestamp_clock import TimestampClock
 from infrastructure.adapters.mappers.user import SqlAlchemyUserMapper
 from infrastructure.adapters.mappers.access_key import RedisAccessKeyMapper
+from infrastructure.adapters.mappers.email_verification import RedisEmailVerificationMapper
 from infrastructure.adapters.redis_adapter import RedisAdapter
 from infrastructure.adapters.notifiers.sensetive_data_change import RedisStreamsSensetiveDataChangeNotifier
 from infrastructure.adapters.gateways import (
@@ -39,6 +44,8 @@ from infrastructure.adapters.gateways import (
     SqlAlchemyUserQueryGateway,
     RedisAccessKeyQueryGateway,
     RedisAccessKeyCommandGateway,
+    RedisEmailVerificationQueryGateway,
+    RedisEmailVerificationCommandGateway,
 )
 from redis.asyncio import Redis
 
@@ -53,6 +60,7 @@ class ApplicationProvider(Provider):
 
     user_mapper = provide(source=SqlAlchemyUserMapper, provides=UserMapper)
     access_key_mapper = provide(source=RedisAccessKeyMapper, provides=AccessKeyMapper)
+    email_verification_mapper = provide(source=RedisEmailVerificationMapper, provides=EmailVerififcationMapper)
 
     sensetive_data_change_notifier: SensetiveDataChangeNotifier = provide(
         source=RedisStreamsSensetiveDataChangeNotifier, provides=SensetiveDataChangeNotifier
@@ -76,7 +84,19 @@ class ApplicationProvider(Provider):
         source=RedisAccessKeyQueryGateway, provides=AccessKeyQueryGateway
     )
 
+    email_verification_command_gateway = provide(
+        source=RedisEmailVerificationCommandGateway,
+        provides=EmailVerificationCommandGateway
+    )
+
+    email_verification_query_gateway = provide(
+        source=RedisEmailVerificationQueryGateway,
+        provides=EmailVerificationQueryGateway
+    )
+
     register_user = provide(RegisterUserUsecase)
+
+    send_email_verification_usecase = provide(SendEmailVerificationLinkUsecase)
 
     password_login_method = provide(PasswordLoginMethod)
 
