@@ -1,6 +1,8 @@
+from .base import ApplicationError
 from .user import *
 from .access_key import ExpiredAccessKeyError, AccessKeyNotFound
-from .base import ApplicationError
+from .email_verification import EmailVerificationObjectNotFound
+
 
 __all__ = [
     "UserAlreadyExistsError",
@@ -10,4 +12,5 @@ __all__ = [
     "ApplicationError",
     "AccessKeyNotFound",
     "WrongPasswordError",
+    "EmailVerificationObjectNotFound",
 ]
